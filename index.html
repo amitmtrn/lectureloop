@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Turn English lecture notes into a summary, key terms and Anki flashcards, on-device first."
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>LectureLoop</title>
+  </head>
+  <body>
+    <main class="container">
+      <header class="hero">
+        <h1>LectureLoop</h1>
+        <p class="tagline">
+          Paste a lecture, get a summary, key terms and flashcards. Runs on-device with Gemini Nano
+          when it can, in the cloud when it can't.
+        </p>
+      </header>
+
+      <section id="config-panel" class="panel panel-warning" hidden aria-labelledby="config-title">
+        <h2 id="config-title">Configure Firebase</h2>
+        <p id="config-message">
+          LectureLoop needs a Firebase project before it can generate anything. Copy
+          <code>.env.example</code> to <code>.env.local</code>, fill in these values and restart
+          <code>npm run dev</code>:
+        </p>
+        <ul id="config-missing" class="mono-list"></ul>
+        <p>See the <strong>Setup</strong> section of the README for step-by-step instructions.</p>
+      </section>
+
+      <form id="study-form" class="panel" novalidate>
+        <div class="field">
+          <label for="mode">Inference mode</label>
+          <select id="mode" name="mode" aria-describedby="mode-help"></select>
+          <p id="mode-help" class="help"></p>
+          <p id="device-status" class="help" role="status" aria-live="polite"></p>
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="lecture">Lecture text (English)</label>
+            <button type="button" id="load-sample" class="btn btn-link">Load sample</button>
+          </div>
+          <textarea
+            id="lecture"
+            name="lecture"
+            rows="12"
+            placeholder="Paste lecture notes or a transcript here…"
+            aria-describedby="lang-note char-count"
+            spellcheck="true"
+          ></textarea>
+          <p id="char-count" class="help">0 characters</p>
+          <p id="lang-note" class="note" hidden role="status">
+            This text doesn't look like English. On-device Gemini Nano only supports English, so
+            results may be poor; a cloud mode may work better.
+          </p>
+        </div>
+
+        <div class="actions">
+          <button type="submit" id="generate" class="btn btn-primary">Generate study pack</button>
+          <span id="status" class="status" role="status" aria-live="polite"></span>
+        </div>
+      </form>
+
+      <section
+        id="error-panel"
+        class="panel panel-error"
+        hidden
+        role="alert"
+        aria-labelledby="error-title"
+      >
+        <h2 id="error-title"></h2>
+        <p id="error-detail"></p>
+        <div id="chrome-setup" hidden>
+          <p>To use on-device inference:</p>
+          <ol>
+            <li>Use desktop Chrome 139 or newer.</li>
+            <li>
+              Enable <code>chrome://flags/#prompt-api-for-gemini-nano-multimodal-input</code> and
+              restart Chrome.
+            </li>
+            <li>Make sure you have about 22 GB of free disk space for the model download.</li>
+            <li>Check model status at <code>chrome://on-device-internals</code>.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section id="results" class="panel" hidden aria-labelledby="results-title">
+        <div class="results-head">
+          <h2 id="results-title">Study pack</h2>
+          <span class="visually-hidden">Inference source:</span>
+          <span id="source-badge" class="badge"></span>
+        </div>
+
+        <h3>Summary</h3>
+        <div id="summary" class="summary"></div>
+
+        <h3>Key terms</h3>
+        <ul id="terms" class="chips" aria-label="Key terms"></ul>
+
+        <div class="cards-head">
+          <h3>Flashcards <span id="card-count" class="muted"></span></h3>
+          <button type="button" id="download" class="btn btn-secondary">Download Anki .txt</button>
+        </div>
+        <ol id="cards" class="cards"></ol>
+      </section>
+
+      <footer class="footer">
+        <p>Built with Firebase AI Logic hybrid inference for #BuildHybridAI. Apache-2.0.</p>
+      </footer>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

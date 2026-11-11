@@ -1,0 +1,30 @@
+# deps
+node_modules/
+
+# build
+dist/
+dist-ssr/
+coverage/
+*.local
+
+# env (keep only the example)
+.env*
+!.env.example
+
+# logs
+logs/
+*.log
+npm-debug.log*
+
+# editor / os
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.swp
+
+# never commit these
+*.mp4
+*.mov
+*.webm
+*.pdf

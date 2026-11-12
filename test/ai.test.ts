@@ -2,13 +2,18 @@ import type * as FirebaseAI from 'firebase/ai';
 import type { AI } from 'firebase/ai';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { getGenerativeModel, generateContent } = vi.hoisted(() => {
+const { getGenerativeModel, generateContent, initializeDeviceModel, browser } = vi.hoisted(() => {
+  // `hasBuiltInModel: false` mimics a browser without Gemini Nano: the SDK then
+  // attaches no on-device adapter and silently sends every mode to the cloud.
+  const browser = { hasBuiltInModel: true };
   const generateContent = vi.fn();
+  const initializeDeviceModel = vi.fn(async () => {});
   const getGenerativeModel = vi.fn(() => ({
     generateContent,
-    initializeDeviceModel: vi.fn(async () => {}),
+    initializeDeviceModel,
+    ...(browser.hasBuiltInModel ? { chromeAdapter: {} } : {}),
   }));
-  return { getGenerativeModel, generateContent };
+  return { getGenerativeModel, generateContent, initializeDeviceModel, browser };
 });
 
 // Keep the real enums and Schema builder; only stub the network-facing model.
@@ -23,6 +28,8 @@ const {
   generateStudyPack,
   InferenceMode,
   InferenceSource,
+  OnDeviceUnavailableError,
+  prepareOnDevice,
   runStudyPack,
   studyPackJsonSchema,
   summarizeSources,
@@ -47,11 +54,14 @@ const maxChunkTokens = Math.ceil(Math.max(...paragraphs.map((p) => p.length)) / 
 
 beforeEach(() => {
   generateContent.mockReset();
+  initializeDeviceModel.mockClear();
   getGenerativeModel.mockClear();
+  browser.hasBuiltInModel = true;
 });
 
 describe('generateStudyPack (mocked Firebase AI Logic)', () => {
   it('configures hybrid inference with structured output for cloud and device', async () => {
+    vi.spyOn(console, 'info').mockImplementation(() => {});
     generateContent.mockResolvedValue(
       response({ summary: 'S', keyTerms: [], cards: [] }, InferenceSource.ON_DEVICE),
     );
@@ -67,8 +77,16 @@ describe('generateStudyPack (mocked Firebase AI Logic)', () => {
           responseSchema: expect.anything(),
         }),
       }),
-      onDeviceParams: { promptOptions: { responseConstraint: studyPackJsonSchema } },
+      onDeviceParams: {
+        createOptions: {
+          expectedInputs: [{ type: 'text', languages: ['en'] }],
+          expectedOutputs: [{ type: 'text', languages: ['en'] }],
+        },
+        promptOptions: { responseConstraint: studyPackJsonSchema },
+      },
     });
+    expect(generateContent).toHaveBeenCalledTimes(1);
+    expect(generateContent.mock.calls[0]?.[0]).toContain('Short text.');
   });
 
   it('reuses one model per AI instance and mode', async () => {
@@ -163,6 +181,56 @@ describe('generateStudyPack (mocked Firebase AI Logic)', () => {
   });
 });
 
+describe('"Only on-device" never reaches the cloud', () => {
+  it('refuses to call the model when the SDK has no on-device adapter', async () => {
+    browser.hasBuiltInModel = false;
+    generateContent.mockResolvedValue(
+      response({ summary: 'S', keyTerms: [], cards: [] }, InferenceSource.IN_CLOUD),
+    );
+    const ai = {} as AI;
+    await expect(
+      generateStudyPack('Private notes.', InferenceMode.ONLY_ON_DEVICE, { ai }),
+    ).rejects.toBeInstanceOf(OnDeviceUnavailableError);
+    expect(generateContent).not.toHaveBeenCalled();
+  });
+
+  it('prepareOnDevice rejects instead of silently resolving', async () => {
+    browser.hasBuiltInModel = false;
+    const ai = {} as AI;
+    await expect(prepareOnDevice(ai, InferenceMode.ONLY_ON_DEVICE)).rejects.toBeInstanceOf(
+      OnDeviceUnavailableError,
+    );
+    expect(initializeDeviceModel).not.toHaveBeenCalled();
+  });
+
+  it('prepareOnDevice forwards the progress callback when the adapter exists', async () => {
+    const onProgress = vi.fn();
+    await prepareOnDevice({} as AI, InferenceMode.ONLY_ON_DEVICE, onProgress);
+    expect(initializeDeviceModel).toHaveBeenCalledWith(onProgress);
+  });
+
+  it('rejects a response that did not come from the device', async () => {
+    vi.spyOn(console, 'info').mockImplementation(() => {});
+    generateContent.mockResolvedValue(
+      response({ summary: 'S', keyTerms: [], cards: [] }, InferenceSource.IN_CLOUD),
+    );
+    await expect(
+      generateStudyPack('Text.', InferenceMode.ONLY_ON_DEVICE, { ai: {} as AI }),
+    ).rejects.toBeInstanceOf(OnDeviceUnavailableError);
+    expect(generateContent).toHaveBeenCalledTimes(1); // not retried
+  });
+
+  it('still uses the cloud in hybrid modes without an adapter', async () => {
+    vi.spyOn(console, 'info').mockImplementation(() => {});
+    browser.hasBuiltInModel = false;
+    generateContent.mockResolvedValue(response({ summary: 'S', keyTerms: [], cards: [] }));
+    const ai = {} as AI;
+    await prepareOnDevice(ai, InferenceMode.PREFER_ON_DEVICE);
+    const result = await generateStudyPack('Text.', InferenceMode.PREFER_ON_DEVICE, { ai });
+    expect(result.sources).toEqual([InferenceSource.IN_CLOUD]);
+  });
+});
+
 describe('runStudyPack', () => {
   it('rejects empty input without calling the model', async () => {
     const generate = vi.fn();
@@ -202,6 +270,7 @@ describe('helpers', () => {
       'on_device',
     );
     expect(summarizeSources([InferenceSource.IN_CLOUD])).toBe('in_cloud');
+    expect(summarizeSources([InferenceSource.IN_CLOUD, InferenceSource.ON_DEVICE])).toBe('mixed');
   });
 
   it('buildPrompt asks for JSON only and embeds the chunk', () => {

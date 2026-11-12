@@ -1,6 +1,12 @@
 import { initializeApp } from 'firebase/app';
-import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
+import {
+  getToken,
+  initializeAppCheck,
+  ReCaptchaEnterpriseProvider,
+  type AppCheck,
+} from 'firebase/app-check';
 import { getAI, GoogleAIBackend, type AI } from 'firebase/ai';
+import { settlesWithin } from './cloud';
 import { appCheckDebugToken, readConfig } from './config';
 
 declare global {
@@ -10,7 +16,7 @@ declare global {
 }
 
 export type FirebaseStatus =
-  | { ready: true; ai: AI }
+  | { ready: true; ai: AI; appCheck: AppCheck }
   | { ready: false; missing: string[] }
   | { ready: false; missing: []; error: string };
 
@@ -39,13 +45,13 @@ function init(): FirebaseStatus {
     }
 
     // App Check must be initialized before any AI Logic call.
-    initializeAppCheck(app, {
+    const appCheck = initializeAppCheck(app, {
       provider: new ReCaptchaEnterpriseProvider(config.recaptchaSiteKey),
       isTokenAutoRefreshEnabled: true,
     });
 
     const ai = getAI(app, { backend: new GoogleAIBackend() });
-    return { ready: true, ai };
+    return { ready: true, ai, appCheck };
   } catch (err) {
     console.error('Firebase initialization failed', err);
     return {
@@ -57,3 +63,13 @@ function init(): FirebaseStatus {
 }
 
 export const firebaseStatus: FirebaseStatus = init();
+
+/**
+ * Whether App Check answers at all within `timeoutMs`. A *failed* token
+ * exchange still counts: the SDK then sends a placeholder token and the backend
+ * decides. Only a request that never settles (reCAPTCHA script blocked) makes
+ * cloud calls hang, which is what callers need to know.
+ */
+export function appCheckResponds(appCheck: AppCheck, timeoutMs: number): Promise<boolean> {
+  return settlesWithin(getToken(appCheck), timeoutMs);
+}

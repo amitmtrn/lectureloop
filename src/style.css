@@ -4,10 +4,13 @@
   --text: #1c2030;
   --muted: #5b6275;
   --border: #dde1ea;
+  /* Form-control outlines need 3:1 against their surroundings (WCAG 1.4.11). */
+  --input-border: #7d859b;
   --primary: #3b5bdb;
   --primary-hover: #304bc0;
-  --focus: #91a7ff;
-  --device: #2b8a3e;
+  --on-primary: #ffffff;
+  --focus: #4263eb;
+  --device: #237032;
   --device-bg: #e6f6ea;
   --cloud: #1864ab;
   --cloud-bg: #e3effb;
@@ -39,8 +42,12 @@
     --text: #e7e9f0;
     --muted: #a3a9ba;
     --border: #2e3344;
+    --input-border: #727a92;
     --primary: #5c7cfa;
     --primary-hover: #748ffc;
+    /* White on the lighter dark-theme blue is only 3.7:1. */
+    --on-primary: #12141c;
+    --focus: #91a7ff;
     --device: #8ce99a;
     --device-bg: #1d3524;
     --cloud: #a5d8ff;
@@ -111,6 +118,10 @@ code {
   font-size: 0.9em;
 }
 
+.mono-list {
+  overflow-wrap: anywhere;
+}
+
 .field {
   margin-bottom: 1.1rem;
 }
@@ -134,7 +145,7 @@ textarea {
   font: inherit;
   color: inherit;
   background: var(--bg);
-  border: 1px solid var(--border);
+  border: 1px solid var(--input-border);
   border-radius: 8px;
   padding: 0.6rem 0.7rem;
 }
@@ -146,7 +157,8 @@ textarea {
 
 select:focus-visible,
 textarea:focus-visible,
-.btn:focus-visible {
+.btn:focus-visible,
+[tabindex='-1']:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
@@ -159,6 +171,12 @@ textarea:focus-visible,
 
 .help:empty {
   display: none;
+}
+
+/* Live regions must stay rendered while empty or updates may not be announced. */
+.help[role='status']:empty {
+  display: block;
+  margin: 0;
 }
 
 .note {
@@ -197,7 +215,7 @@ textarea:focus-visible,
 
 .btn-primary {
   background: var(--primary);
-  color: #fff;
+  color: var(--on-primary);
 }
 
 .btn-primary:hover:not(:disabled) {

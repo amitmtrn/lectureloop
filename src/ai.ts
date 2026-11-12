@@ -113,9 +113,42 @@ export function createStudyModel(ai: AI, mode: InferenceMode): GenerativeModel {
       },
     },
     onDeviceParams: {
+      // Text-only English sessions. The SDK default also asks for image input,
+      // which makes availability depend on Chrome's multimodal model support.
+      createOptions: {
+        expectedInputs: [{ type: 'text', languages: ['en'] }],
+        expectedOutputs: [{ type: 'text', languages: ['en'] }],
+      },
       promptOptions: { responseConstraint: studyPackJsonSchema },
     },
   });
+}
+
+/** Thrown when "Only on-device" is selected but the request could not stay local. */
+export class OnDeviceUnavailableError extends Error {
+  constructor(message = 'The on-device model is not available in this browser.') {
+    super(message);
+    this.name = 'OnDeviceUnavailableError';
+  }
+}
+
+/**
+ * Whether the SDK attached its on-device (Chrome) adapter to this model.
+ *
+ * The SDK only creates the adapter when the browser exposes the built-in
+ * model. Without it, firebase 13.2.0 routes *every* mode, including
+ * ONLY_ON_DEVICE, to the cloud and `initializeDeviceModel()` resolves as a
+ * no-op, so "Only on-device" has to be enforced here. The adapter is not part
+ * of the public typings; if a future SDK renames it, this fails closed.
+ */
+export function hasOnDeviceAdapter(model: GenerativeModel): boolean {
+  return (model as unknown as { chromeAdapter?: unknown }).chromeAdapter != null;
+}
+
+function assertCanStayOnDevice(model: GenerativeModel, mode: InferenceMode): void {
+  if (mode === InferenceMode.ONLY_ON_DEVICE && !hasOnDeviceAdapter(model)) {
+    throw new OnDeviceUnavailableError();
+  }
 }
 
 // One model per (AI instance, mode). Reusing the instance matters: the SDK
@@ -141,12 +174,14 @@ export function getStudyModel(ai: AI, mode: InferenceMode): GenerativeModel {
  * gesture (e.g. the Generate click). No-op for ONLY_IN_CLOUD.
  * Resolves when the model is ready; throws in ONLY_ON_DEVICE if unavailable.
  */
-export function prepareOnDevice(
+export async function prepareOnDevice(
   ai: AI,
   mode: InferenceMode,
   onDownloadProgress?: (fraction: number) => void,
 ): Promise<void> {
-  return getStudyModel(ai, mode).initializeDeviceModel(onDownloadProgress);
+  const model = getStudyModel(ai, mode);
+  assertCanStayOnDevice(model, mode);
+  await model.initializeDeviceModel(onDownloadProgress);
 }
 
 export interface GenerateOutput {
@@ -157,12 +192,19 @@ export interface GenerateOutput {
 /** One model call. Injectable so orchestration can be tested without Firebase. */
 export type GenerateFn = (prompt: string) => Promise<GenerateOutput>;
 
-export function modelGenerateFn(model: GenerativeModel): GenerateFn {
+export function modelGenerateFn(model: GenerativeModel, mode?: InferenceMode): GenerateFn {
   return async (prompt) => {
+    // Checked before every call so "Only on-device" text never reaches the cloud.
+    if (mode) assertCanStayOnDevice(model, mode);
     const result = await model.generateContent(prompt);
     // Without a hybrid adapter the SDK only talks to the cloud.
     const source = result.response.inferenceSource ?? InferenceSource.IN_CLOUD;
     console.info(`[LectureLoop] inferenceSource: ${source}`);
+    if (mode === InferenceMode.ONLY_ON_DEVICE && source !== InferenceSource.ON_DEVICE) {
+      throw new OnDeviceUnavailableError(
+        'The on-device model is not available: "Only on-device" was selected but the response did not come from the device.',
+      );
+    }
     return { text: result.response.text(), source };
   };
 }
@@ -222,7 +264,7 @@ export function generateStudyPack(
   mode: InferenceMode,
   options: GenerateStudyPackOptions,
 ): Promise<StudyPackResult> {
-  const generate = modelGenerateFn(getStudyModel(options.ai, mode));
+  const generate = modelGenerateFn(getStudyModel(options.ai, mode), mode);
   return runStudyPack(text, generate, options);
 }
 

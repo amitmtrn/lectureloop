@@ -100,4 +100,20 @@ describe('parseStudyPack', () => {
     expect(parseStudyPack(JSON.stringify(pack))).toEqual(pack);
     expect(parseStudyPack(`\`\`\`json\n${JSON.stringify(pack)}\n\`\`\``)).toEqual(pack);
   });
+
+  it('skips parseable objects that are not a study pack', () => {
+    expect(parseStudyPack(`Sure {} here: ${JSON.stringify(valid)}`)).toEqual(valid);
+    expect(parseStudyPack(`{"note":"draft"}\n${JSON.stringify(valid)}`)).toEqual(valid);
+  });
+
+  it('unwraps a pack nested in a wrapper object or array', () => {
+    expect(parseStudyPack(JSON.stringify({ studyPack: valid }))).toEqual(valid);
+    expect(parseStudyPack(JSON.stringify([valid]))).toEqual(valid);
+  });
+
+  it('reports truncated output as incomplete', () => {
+    const cut = JSON.stringify(valid).slice(0, 30);
+    expect(() => parseStudyPack(cut)).toThrow(/incomplete JSON/);
+    expect(() => parseStudyPack(cut)).toThrow(StudyPackParseError);
+  });
 });

@@ -9,8 +9,9 @@ import {
 } from './ai';
 import { toAnkiTxt } from './anki';
 import { chunkText } from './chunk';
+import { AppCheckStuckError, modeWithoutCloud } from './cloud';
 import { toFriendlyError } from './errors';
-import { firebaseStatus } from './firebase';
+import { appCheckResponds, firebaseStatus } from './firebase';
 import { looksNonEnglish } from './lang';
 import { SAMPLE_LECTURE } from './sample';
 import type { StudyPack } from './types';
@@ -40,6 +41,7 @@ const els = {
   errorDetail: $('error-detail'),
   chromeSetup: $('chrome-setup'),
   results: $('results'),
+  resultsTitle: $('results-title'),
   badge: $('source-badge'),
   summary: $('summary'),
   terms: $<HTMLUListElement>('terms'),
@@ -85,7 +87,11 @@ function updateModeHelp(): void {
   const mode = selectedMode();
   els.modeHelp.textContent = MODE_OPTIONS.find((o) => o.value === mode)?.help ?? '';
 }
-els.mode.addEventListener('change', updateModeHelp);
+els.mode.addEventListener('change', () => {
+  updateModeHelp();
+  // A download/ready note from a previous run belongs to the previous mode.
+  if (!busy) els.deviceStatus.textContent = '';
+});
 updateModeHelp();
 
 // ---- Text input -------------------------------------------------------------
@@ -212,6 +218,11 @@ els.form.addEventListener('submit', (event) => {
   void onGenerate();
 });
 
+// First probe waits for reCAPTCHA to load; once it has failed, don't make every click wait again.
+const APP_CHECK_WAIT_MS = 8000;
+const APP_CHECK_RECHECK_MS = 1500;
+let appCheckWasStuck = false;
+
 async function onGenerate(): Promise<void> {
   if (busy || !firebaseStatus.ready) return;
   const text = els.lecture.value.trim();
@@ -221,8 +232,9 @@ async function onGenerate(): Promise<void> {
     return;
   }
 
-  const { ai } = firebaseStatus;
-  const mode = selectedMode();
+  const { ai, appCheck } = firebaseStatus;
+  let mode = selectedMode();
+  let cloudBlocked = false;
   hideError();
   setBusy(true);
 
@@ -251,20 +263,38 @@ async function onGenerate(): Promise<void> {
       }
     }
 
-    setStatus('Generating…');
+    if (mode !== InferenceMode.ONLY_ON_DEVICE) {
+      // If App Check never answers, cloud calls would hang forever instead of failing.
+      if (!appCheckWasStuck) setStatus('Checking App Check…');
+      const wait = appCheckWasStuck ? APP_CHECK_RECHECK_MS : APP_CHECK_WAIT_MS;
+      appCheckWasStuck = !(await appCheckResponds(appCheck, wait));
+      if (appCheckWasStuck) {
+        const fallback = modeWithoutCloud(mode);
+        if (!fallback) throw new AppCheckStuckError();
+        console.warn('[LectureLoop] App Check is not responding; using on-device only');
+        mode = fallback;
+        cloudBlocked = true;
+      }
+    }
+
+    const generating = cloudBlocked ? 'Cloud unreachable. Generating on-device…' : 'Generating…';
+    setStatus(generating);
     const result = await generateStudyPack(text, mode, {
       ai,
       onProgress: ({ chunk, total }) =>
-        setStatus(total > 1 ? `Chunk ${chunk}/${total}…` : 'Generating…'),
+        setStatus(total > 1 ? `Chunk ${chunk}/${total}…` : generating),
     });
     currentPack = result.data;
     renderResults(result.data, summarizeSources(result.sources));
-    setStatus(`Done: ${result.data.cards.length} cards.`);
+    const count = result.data.cards.length;
+    setStatus(`Done: ${count} ${count === 1 ? 'card' : 'cards'}.`);
+    // Take keyboard and screen-reader users to the new content.
+    els.resultsTitle.focus();
   } catch (err) {
     console.error('[LectureLoop] generation failed', err);
     // In "Only on-device" a failed warm-up leaves a stale download message.
     if (mode === InferenceMode.ONLY_ON_DEVICE) els.deviceStatus.textContent = '';
-    const friendly = toFriendlyError(err, mode);
+    const friendly = toFriendlyError(err, mode, cloudBlocked);
     showError(friendly.title, friendly.detail, friendly.showChromeSetup);
     setStatus('');
   } finally {

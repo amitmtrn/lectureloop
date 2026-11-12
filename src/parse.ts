@@ -98,28 +98,38 @@ export function coerceStudyPack(value: unknown): StudyPack {
 /**
  * Parses raw model text (possibly fenced or chatty) into a StudyPack. Tries the
  * fenced block first, then the raw text (a "```" inside a JSON string would
- * otherwise cut the payload), and every `{` in turn so stray braces in leading
- * chatter don't hide the real object.
+ * otherwise cut the payload), and every `{` in turn so stray braces or small
+ * unrelated objects in leading chatter don't hide the real one.
  */
 export function parseStudyPack(raw: string): StudyPack {
-  let sawObject = false;
+  let sawBalanced = false;
+  let shapeError: StudyPackParseError | undefined;
   for (const text of new Set([stripCodeFences(raw), raw])) {
     for (let from = text.indexOf('{'); from !== -1; from = text.indexOf('{', from + 1)) {
       const json = extractFirstJsonObject(text, from);
       if (json === null) continue; // unbalanced from here; a later `{` may still close
-      sawObject = true;
+      sawBalanced = true;
       let parsed: unknown;
       try {
         parsed = JSON.parse(json);
       } catch {
         continue;
       }
-      return coerceStudyPack(parsed);
+      try {
+        return coerceStudyPack(parsed);
+      } catch (err) {
+        // Valid JSON but not a study pack (e.g. `{}` in chatter). Remember the
+        // outermost complaint and keep looking.
+        if (!(err instanceof StudyPackParseError)) throw err;
+        shapeError ??= err;
+      }
     }
   }
+  if (shapeError) throw shapeError;
+  if (sawBalanced) throw new StudyPackParseError('Model response contained malformed JSON.');
   throw new StudyPackParseError(
-    sawObject
-      ? 'Model response contained malformed JSON.'
+    raw.includes('{')
+      ? 'Model response contained incomplete JSON (it may have been cut off).'
       : 'Model response did not contain a JSON object.',
   );
 }

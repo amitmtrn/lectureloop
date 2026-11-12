@@ -72,4 +72,37 @@ describe('chunkText', () => {
     // English keeps the 4 chars/token budget.
     expect(chunkText('word '.repeat(800), 1000)).toHaveLength(1);
   });
+
+  it('budgets a non-ASCII passage inside mostly English text per chunk', () => {
+    const english = Array.from({ length: 40 }, (_, i) => `Sentence number ${i} is plain.`).join(
+      ' ',
+    );
+    const hebrew = Array.from({ length: 60 }, () => 'זהו משפט בעברית על פוטוסינתזה.').join(' ');
+    const text = `${english}\n\n${hebrew}\n\n${english}`;
+    const chunks = chunkText(text, 300);
+    for (const c of chunks) expect(estimateTokens(c)).toBeLessThanOrEqual(300);
+    expect(chunks.join(' ').replace(/\s+/g, ' ')).toBe(text.replace(/\s+/g, ' '));
+  });
+
+  it('never exceeds the budget and never loses text', () => {
+    const text = [
+      para(30),
+      'x'.repeat(900),
+      `${'run on words '.repeat(120)}end.`,
+      'Short one.',
+      `emoji ${'😀'.repeat(50)} tail`,
+    ].join('\n\n');
+    for (const maxTokens of [1, 7, 25, 100, 1000]) {
+      const chunks = chunkText(text, maxTokens);
+      // Astral characters are never cut in half, so allow one token of slack.
+      for (const c of chunks) expect(estimateTokens(c)).toBeLessThanOrEqual(maxTokens + 1);
+      expect(chunks.join('').replace(/\s+/g, '')).toBe(text.replace(/\s+/g, ''));
+      expect(chunks.every((c) => c.trim() === c && c !== '')).toBe(true);
+    }
+  });
+
+  it('rejects a non-positive or NaN budget', () => {
+    expect(() => chunkText('text', 0)).toThrow(RangeError);
+    expect(() => chunkText('text', Number.NaN)).toThrow(RangeError);
+  });
 });

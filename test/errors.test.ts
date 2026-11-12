@@ -1,5 +1,7 @@
 import { AIError, AIErrorCode, InferenceMode } from 'firebase/ai';
 import { describe, expect, it } from 'vitest';
+import { OnDeviceUnavailableError } from '../src/ai';
+import { AppCheckStuckError } from '../src/cloud';
 import { toFriendlyError } from '../src/errors';
 import { StudyPackParseError } from '../src/parse';
 
@@ -20,6 +22,34 @@ describe('toFriendlyError', () => {
       'Local LanguageModel API not available in this environment.',
     );
     expect(toFriendlyError(err, InferenceMode.ONLY_ON_DEVICE).showChromeSetup).toBe(true);
+  });
+
+  it('explains Chrome setup when the app blocks an "Only on-device" cloud fallthrough', () => {
+    const f = toFriendlyError(new OnDeviceUnavailableError(), InferenceMode.ONLY_ON_DEVICE);
+    expect(f.title).toMatch(/Gemini Nano/);
+    expect(f.detail).toMatch(/Only on-device/);
+    expect(f.showChromeSetup).toBe(true);
+  });
+
+  it('explains a blocked reCAPTCHA when App Check never answers', () => {
+    const f = toFriendlyError(new AppCheckStuckError(), InferenceMode.ONLY_IN_CLOUD);
+    expect(f.title).toMatch(/Could not reach the cloud/);
+    expect(f.detail).toMatch(/reCAPTCHA did not load/);
+    expect(f.showChromeSetup).toBeFalsy();
+  });
+
+  it('mentions both problems when the cloud is blocked and Nano is missing', () => {
+    const f = toFriendlyError(new OnDeviceUnavailableError(), InferenceMode.ONLY_ON_DEVICE, true);
+    expect(f.title).toMatch(/Neither/);
+    expect(f.detail).toMatch(/reCAPTCHA did not load/);
+    expect(f.showChromeSetup).toBe(true);
+  });
+
+  it('reports an unreachable cloud', () => {
+    const err = new AIError(AIErrorCode.FETCH_ERROR, 'Failed to fetch');
+    const f = toFriendlyError(err, InferenceMode.ONLY_IN_CLOUD);
+    expect(f.title).toMatch(/Could not reach/);
+    expect(f.showChromeSetup).toBeFalsy();
   });
 
   it('points at Firebase console when the cloud API is not enabled', () => {

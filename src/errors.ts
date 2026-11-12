@@ -1,4 +1,6 @@
 import { AIError, AIErrorCode, InferenceMode } from 'firebase/ai';
+import { OnDeviceUnavailableError } from './ai';
+import { AppCheckStuckError } from './cloud';
 import { StudyPackParseError } from './parse';
 
 export interface FriendlyError {
@@ -14,8 +16,23 @@ const ON_DEVICE_MARKERS = [
   'Chrome AI requested for unsupported browser',
 ];
 
-export function toFriendlyError(err: unknown, mode: InferenceMode): FriendlyError {
+const RECAPTCHA_BLOCKED =
+  'App Check could not get a token because reCAPTCHA did not load. Check your connection and any ad or tracker blocker, then reload the page.';
+
+/**
+ * @param cloudBlocked - the run was degraded to on-device only because App
+ * Check never answered (see `AppCheckStuckError`).
+ */
+export function toFriendlyError(
+  err: unknown,
+  mode: InferenceMode,
+  cloudBlocked = false,
+): FriendlyError {
   const message = err instanceof Error ? err.message : String(err);
+
+  if (err instanceof AppCheckStuckError) {
+    return { title: 'Could not reach the cloud model', detail: RECAPTCHA_BLOCKED };
+  }
 
   if (err instanceof StudyPackParseError) {
     return {
@@ -27,10 +44,18 @@ export function toFriendlyError(err: unknown, mode: InferenceMode): FriendlyErro
   const onDeviceUnavailable = ON_DEVICE_MARKERS.some((m) => message.includes(m));
   if (
     onDeviceUnavailable ||
+    err instanceof OnDeviceUnavailableError ||
     (mode === InferenceMode.ONLY_ON_DEVICE &&
       err instanceof AIError &&
       (err.code === AIErrorCode.UNSUPPORTED || err.code === AIErrorCode.API_NOT_ENABLED))
   ) {
+    if (cloudBlocked) {
+      return {
+        title: 'Neither the cloud nor Gemini Nano is available',
+        detail: `${RECAPTCHA_BLOCKED} Alternatively, set up Chrome's built-in model as below to work without the cloud.`,
+        showChromeSetup: true,
+      };
+    }
     return {
       title: 'Gemini Nano is not available in this browser',
       detail:

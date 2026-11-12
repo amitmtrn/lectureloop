@@ -12,12 +12,13 @@ Paste in your lecture notes (or a transcript) and LectureLoop hands you back a s
   | Only on-device             | Gemini Nano or an error. Nothing leaves the browser     |
   | Prefer cloud               | Cloud, falling back to Nano if the cloud is unreachable |
   | Only cloud                 | Always cloud                                            |
+- **"Only on-device" is enforced by the app.** In a browser without the built-in model the SDK (firebase 13.2.0) creates no on-device adapter and would send every mode, including `ONLY_ON_DEVICE`, to the cloud. `src/ai.ts` therefore refuses to call the model in that mode when the adapter is missing, and rejects any response whose `inferenceSource` isn't `on_device`.
 - **Model download.** Clicking _Generate_ calls `initializeDeviceModel()` (it needs a user gesture), which starts the Nano download if needed and shows progress. In _Prefer on-device_ the app doesn't wait: chunks run in the cloud until Nano is ready.
 - **Where did it run?** Every response carries `inferenceSource`. The app logs it per call (`console.info`) and shows a badge: **On-device**, **In-cloud**, or **Mixed** when chunks ran in different places.
-- **Structured output.** Cloud calls use `responseMimeType: 'application/json'` + `responseSchema`. On-device calls use `onDeviceParams.promptOptions.responseConstraint` (JSON Schema). The prompt also asks for JSON only, and `src/parse.ts` defensively strips fences, extracts the first parseable JSON object and validates its shape. A malformed answer is retried once.
+- **Structured output.** Cloud calls use `responseMimeType: 'application/json'` + `responseSchema`. On-device calls use `onDeviceParams.promptOptions.responseConstraint` (JSON Schema). On-device sessions are requested as text-only English (`onDeviceParams.createOptions`), since the app sends no images. The prompt also asks for JSON only, and `src/parse.ts` defensively strips fences, extracts the first JSON object that parses and has the right shape. A malformed answer is retried once.
 - **Chunking for the ~9k context.** Nano has a 9,216-token window that has to hold instructions, the schema, input and output. `src/chunk.ts` splits text into chunks of about 4,000 estimated tokens (4 ASCII chars per token, 1 per non-ASCII char, so non-English text gets smaller chunks) on paragraph, then sentence, then word boundaries. Chunks are processed in order ("Chunk 2/3") and merged deterministically: summaries are joined, key terms are de-duplicated case-insensitively, and cards are de-duplicated by normalized front.
 - **Anki export.** _Download Anki .txt_ writes a tab-separated file with `#separator:tab`, `#html:false` and `#columns:Front<TAB>Back` headers. Fields containing `"` (or starting with `#`) are quoted so Anki imports them verbatim. In Anki, use **File → Import**.
-- **App Check.** Firebase App Check with reCAPTCHA Enterprise is initialized before AI Logic. In dev, the App Check debug provider is used instead.
+- **App Check.** Firebase App Check with reCAPTCHA Enterprise is initialized before AI Logic. In dev, the App Check debug provider is used instead. If the reCAPTCHA script is blocked (offline, ad blocker), App Check never answers and cloud calls would hang, so the app waits up to 8 seconds for a token, then runs hybrid modes on-device only or shows an error for _Only cloud_.
 
 ## Setup
 
@@ -83,6 +84,7 @@ src/
   firebase.ts  Firebase + App Check + AI Logic init, config status
   config.ts    env parsing / missing-var detection (pure)
   ai.ts        hybrid model, prompt, chunk orchestration, inferenceSource
+  cloud.ts     App Check hang detection / on-device fallback helpers
   chunk.ts     token-budgeted text splitting
   parse.ts     defensive JSON parsing / validation
   merge.ts     merging per-chunk study packs

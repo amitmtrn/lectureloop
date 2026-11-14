@@ -46,3 +46,4 @@ Review fixes 4 (fourth review, NITs):
 - [x] T32 Batch-neutral wording for a parse failure: "Run it again." (R6.8)
 - [x] T33 Timeout stop builds the report from the graded rows, so they can be copied. (R7.19)
 - [x] T34 Fix for an unreadable Chrome version: "Could not read the Chrome version". (R2.17)
+- [x] T35 Use `build.rolldownOptions` instead of the deprecated `rollupOptions`.

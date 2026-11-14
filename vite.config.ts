@@ -6,7 +6,7 @@ export default defineConfig({
   build: {
     target: 'es2022',
     sourcemap: false,
-    rollupOptions: {
+    rolldownOptions: {
       input: {
         main: resolve(import.meta.dirname, 'index.html'),
         gate: resolve(import.meta.dirname, 'gate.html'),

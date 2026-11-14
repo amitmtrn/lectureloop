@@ -1,1 +1,1 @@
-- **Unreadable version.** `environmentFixes` adds `version-unknown` when `browser.major === null` for desktop Chrome (R2.17).
+- **Vite config.** `build.rolldownOptions.input` replaces the deprecated `rollupOptions` alias (Vite 8).

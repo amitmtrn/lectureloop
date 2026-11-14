@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { readFileSync } from 'node:fs';
 import type { AppCheck } from 'firebase/app-check';
-import type { AI } from 'firebase/ai';
+import { AIError, AIErrorCode, type AI } from 'firebase/ai';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GateFirebase } from '../src/gate-firebase';
 import { initGateShell, type ShellDeps } from '../src/gate-shell';
@@ -173,6 +173,26 @@ describe('Prepare Nano', () => {
   const click = () => (document.getElementById('prepare') as HTMLButtonElement).click();
   const bar = () => document.getElementById('progress') as HTMLElement;
 
+  it('shows friendly text, not the raw SDK message, when prepare fails', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const raw = 'AI: Local LanguageModel API not available in this environment.';
+    const shell = initGateShell(
+      makeDeps({
+        prepare: async () => {
+          throw new AIError(AIErrorCode.API_NOT_ENABLED, raw);
+        },
+      }),
+    );
+    shell.start();
+    await vi.waitFor(() =>
+      expect(document.getElementById('prepare')).toHaveProperty('disabled', false),
+    );
+    click();
+    await vi.waitFor(() => expect(text('prepare-status')).toContain('Could not prepare Nano'));
+    expect(text('prepare-status')).not.toContain('AI/api-not-enabled');
+    expect(text('prepare-status')).toContain('What to fix');
+  });
+
   it('calls prepare synchronously inside the click, and re-probes after', async () => {
     const deps = makeDeps({
       probe: vi
@@ -241,7 +261,9 @@ describe('Prepare Nano', () => {
     const before = probe.mock.calls.length;
     click();
     await vi.waitFor(() =>
-      expect(text('prepare-status')).toContain('Could not prepare Nano: disk full'),
+      expect(text('prepare-status')).toContain(
+        'Could not prepare Nano. Something went wrong. disk full',
+      ),
     );
     await vi.waitFor(() => expect(probe.mock.calls.length).toBeGreaterThan(before));
     expect(text('fixes')).toContain('Prepare Nano'); // the relevant fix is still listed

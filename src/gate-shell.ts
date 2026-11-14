@@ -9,8 +9,10 @@ import {
   type BrowserInfo,
   type EnvSnapshot,
 } from './gate-env';
+import { InferenceMode } from 'firebase/ai';
 import { createInferenceLock, type GateCtx } from './gate-ctx';
 import { $, el, setChildren, statusRow } from './gate-dom';
+import { gateFriendlyError } from './gate-errors';
 import { allowsCloud, type GateFirebase } from './gate-firebase';
 import type { DeviceAvailability, RouteInput } from './routing';
 
@@ -211,7 +213,8 @@ export function initGateShell(deps: ShellDeps): Shell {
       })
       .catch((err: unknown) => {
         console.error('[LectureLoop] prepare failed', err);
-        els.prepareStatus.textContent = `Could not prepare Nano: ${err instanceof Error ? err.message : String(err)}`;
+        const friendly = gateFriendlyError(err, InferenceMode.ONLY_ON_DEVICE);
+        els.prepareStatus.textContent = `Could not prepare Nano. ${friendly.title}. ${friendly.detail}`;
       })
       .finally(async () => {
         preparing = false;

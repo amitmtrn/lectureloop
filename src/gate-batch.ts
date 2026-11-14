@@ -1,7 +1,12 @@
 import type { GateCtx } from './gate-ctx';
 import { LABELLED_SET, toGradeInput } from './gate-data';
 import { $, el, pathBadge, type PathLabel } from './gate-dom';
-import { describeAvailability, describeBrowser } from './gate-env';
+import {
+  describeAppCheck,
+  describeAvailability,
+  describeBrowser,
+  describeFirebaseConfig,
+} from './gate-env';
 import { gateFriendlyError } from './gate-errors';
 import { allowsCloud } from './gate-firebase';
 import {
@@ -115,7 +120,8 @@ export function initBatch(ctx: GateCtx): void {
       'Availability (text, English)': describeAvailability(e.availability),
       'Firebase on-device adapter': e.adapterAttached ? 'attached' : 'not attached',
       Online: e.online ? 'yes' : 'no',
-      'Firebase config': e.configured ? 'present' : 'not configured',
+      'Firebase config': describeFirebaseConfig(e),
+      'App Check': describeAppCheck(e.appCheck),
     };
   }
 

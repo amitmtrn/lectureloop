@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  describeAppCheck,
   describeAvailability,
+  describeFirebaseConfig,
   describeBrowser,
   environmentFixes,
   parseBrowser,
@@ -147,5 +149,20 @@ describe('environmentFixes', () => {
 
   it('never reports "nothing to fix" when availability is unknown', () => {
     expect(ids({ availability: 'unknown' })).toEqual(['probe-failed']);
+  });
+});
+
+describe('report wording', () => {
+  it('tells init failure from missing config', () => {
+    expect(describeFirebaseConfig({ configured: true })).toBe('present');
+    expect(describeFirebaseConfig({ configured: false })).toBe('not configured');
+    expect(describeFirebaseConfig({ configured: false, initError: 'x' })).toBe(
+      'present, init failed: x',
+    );
+  });
+
+  it('describes every App Check state', () => {
+    expect(describeAppCheck('stuck')).toContain('not responding');
+    expect(describeAppCheck('not-configured')).toBe('not configured');
   });
 });

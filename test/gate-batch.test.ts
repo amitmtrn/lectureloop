@@ -176,6 +176,23 @@ describe('batch go/no-go UI', () => {
     vi.unstubAllGlobals();
   });
 
+  it('reports a failed Firebase init and the App Check status in the copied JSON (R7.15)', async () => {
+    const writeText = vi.fn(async (_text: string) => {});
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
+    gradeAnswer.mockResolvedValue(grade('correct'));
+    initBatch(makeCtx({ initError: 'bad key', appCheck: 'error' }));
+    click('run-batch');
+    await vi.waitFor(() =>
+      expect(document.getElementById('copy-json')).toHaveProperty('disabled', false),
+    );
+    click('copy-json');
+    await settle();
+    const env = JSON.parse(writeText.mock.calls[0]?.[0] as string).environment;
+    expect(env['Firebase config']).toBe('present, init failed: bad key');
+    expect(env['App Check']).toBe('init failed');
+    vi.unstubAllGlobals();
+  });
+
   it('updates the same #verdict live region in place and focuses it on every outcome', async () => {
     const node = document.getElementById('verdict');
     gradeAnswer.mockResolvedValue(grade('correct'));

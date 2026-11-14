@@ -73,6 +73,24 @@ export function describeAvailability(a: DeviceAvailability): string {
   return a === 'api-missing' ? 'API missing' : a === 'unknown' ? 'not checked' : a;
 }
 
+/** Config line for the copied report: distinguishes "init failed" from "not configured". */
+export function describeFirebaseConfig(e: Pick<EnvSnapshot, 'configured' | 'initError'>): string {
+  if (e.configured) return 'present';
+  return e.initError !== undefined ? `present, init failed: ${e.initError}` : 'not configured';
+}
+
+const APP_CHECK_LABEL: Record<AppCheckState, string> = {
+  'not-configured': 'not configured',
+  checking: 'still checking',
+  responding: 'responding',
+  stuck: 'not responding (reCAPTCHA did not load)',
+  error: 'init failed',
+};
+
+export function describeAppCheck(state: AppCheckState): string {
+  return APP_CHECK_LABEL[state];
+}
+
 export interface Fix {
   id: string;
   text: string;

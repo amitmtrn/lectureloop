@@ -58,6 +58,27 @@ The debug token is only applied when `import.meta.env.DEV` is true, so it's stri
 
 Other browsers (and mobile) still work in the cloud modes.
 
+## Nano go/no-go
+
+`/gate.html` is a test page that tells you whether Gemini Nano runs on your machine well enough to build on. It works **without a Firebase project**: with no config it runs in a local, on-device-only mode (no App Check, no cloud calls), and the cloud station is greyed out.
+
+```bash
+npm install
+npm run dev
+# open http://localhost:5173/gate.html in desktop Chrome
+```
+
+1. **Environment** shows the Chrome version, the `LanguageModel` API, its availability for text-only English, whether the Firebase SDK attached its on-device adapter, network, Firebase config and App Check, with the exact fix for anything missing.
+2. **Prepare Nano** starts the model download from a click and shows progress.
+3. **Grade one answer** grades an editable answer on a sample card and shows the verdict, missed points, confidence, latency and a path badge (**ON-DEVICE** teal, **CLOUD** violet, **FAILED**) taken from the response's `inferenceSource`.
+4. **Run go/no-go** makes one warm-up call (reported as cold latency), then grades 12 labelled answers on-device. **Copy JSON** and **Copy Markdown** put the report on the clipboard; nothing is stored.
+
+What Chrome needs: desktop Chrome 139+, `chrome://flags/#prompt-api-for-gemini-nano-multimodal-input` enabled and Chrome relaunched, about 22 GB free disk, and 16 GB RAM with 4+ cores or more than 4 GB VRAM. Check `chrome://on-device-internals`.
+
+**GO** means all of these held with every answer run on-device: warm median latency at most 5000 ms, agreement with the labels at least 70%, and at least 90% of the clearly wrong answers not passed as correct. **NO-GO** means Nano ran but missed a threshold. **INCONCLUSIVE** means Nano did not run (or something ran off-device), so there is nothing to judge. The thresholds live in `GO_THRESHOLDS` in `src/gate-summary.ts`. The on-device SDK exposes no temperature setting, so the low grading temperature applies to cloud calls only.
+
+To enable the cloud route on the page, see [docs/SETUP-FIREBASE.md](docs/SETUP-FIREBASE.md).
+
 ## Limitations
 
 - On-device Gemini Nano is **English only**. The app shows a note when your text looks non-English; use a cloud mode for other languages.
@@ -92,6 +113,9 @@ src/
   errors.ts    user-friendly error messages
   lang.ts      non-English heuristic
   main.ts      UI wiring
+  routing.ts   pure route planning and actual-path classification
+  grade.ts     grading prompt, schemas, verdict parsing
+  gate*.ts     Nano go/no-go page (gate.html)
 test/          Vitest suites
 ```
 

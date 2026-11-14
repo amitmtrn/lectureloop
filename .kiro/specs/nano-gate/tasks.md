@@ -8,4 +8,4 @@
 - [x] T6 `gate.html` + CSS + rollup input + main-page footer link; environment panel and Prepare Nano with progress. (R1, R2, R4)
 - [x] T7 Single grade UI: card, editable answer, route choice, verdict stamp, path badge, mismatch. (R6)
 - [x] T8 Batch go/no-go UI: warm-up, table, summary, big verdict, copy JSON/Markdown. (R7)
-- [ ] T9 Docs: README "Nano go/no-go" section and `docs/SETUP-FIREBASE.md`. (R10)
+- [x] T9 Docs: README "Nano go/no-go" section and `docs/SETUP-FIREBASE.md`. (R10)

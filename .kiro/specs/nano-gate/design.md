@@ -24,15 +24,15 @@ Read from `node_modules/@firebase/ai` 3.0.0 (the version `firebase` 13.2.0 pins)
 
 ## Modules
 
-| File | Role | Pure |
-| --- | --- | --- |
-| `src/routing.ts` | `planRoute`, `classifyPath` (R8) | yes |
-| `src/grade.ts` | prompt, schemas, `parseVerdict`, `runGrade`, `gradeAnswer`, grade model cache (R5) | mostly |
-| `src/gate-summary.ts` | `GO_THRESHOLDS`, `median`, `summarizeBatch`, `toMarkdown`/`toJson` (R7) | yes |
-| `src/gate-data.ts` | sample card, labelled 12-answer set | data |
-| `src/gate-env.ts` | Chrome version parsing, `environmentFixes`, `probeEnvironment` (R2) | pure + probe |
-| `src/gate-firebase.ts` | `initGateFirebase`: configured vs local placeholder (R3) | no |
-| `src/gate.ts`, `src/gate-dom.ts`, `src/gate.css`, `gate.html` | page (R1, R4, R6, R7) | no |
+| File                                                          | Role                                                                               | Pure         |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------ |
+| `src/routing.ts`                                              | `planRoute`, `classifyPath` (R8)                                                   | yes          |
+| `src/grade.ts`                                                | prompt, schemas, `parseVerdict`, `runGrade`, `gradeAnswer`, grade model cache (R5) | mostly       |
+| `src/gate-summary.ts`                                         | `GO_THRESHOLDS`, `median`, `summarizeBatch`, `toMarkdown`/`toJson` (R7)            | yes          |
+| `src/gate-data.ts`                                            | sample card, labelled 12-answer set                                                | data         |
+| `src/gate-env.ts`                                             | Chrome version parsing, `environmentFixes`, `probeEnvironment` (R2)                | pure + probe |
+| `src/gate-firebase.ts`                                        | `initGateFirebase`: configured vs local placeholder (R3)                           | no           |
+| `src/gate.ts`, `src/gate-dom.ts`, `src/gate.css`, `gate.html` | page (R1, R4, R6, R7)                                                              | no           |
 
 ### Routing
 
@@ -41,16 +41,16 @@ deviceReady = adapterAttached && deviceAvailability === 'available'
 cloudReady  = cloudConfigured && online && appCheckResponsive
 ```
 
-| choice | deviceReady | cloudReady | mode | expectedPath |
-| --- | --- | --- | --- | --- |
-| auto | yes | yes | PREFER_ON_DEVICE | on_device |
-| auto | yes | no | ONLY_ON_DEVICE | on_device |
-| auto | no | yes | ONLY_IN_CLOUD | in_cloud |
-| auto | no | no | null | none |
-| device | yes | any | ONLY_ON_DEVICE | on_device |
-| device | no | any | null | none |
-| cloud | any | yes | ONLY_IN_CLOUD | in_cloud |
-| cloud | any | no | null | none |
+| choice | deviceReady | cloudReady | mode             | expectedPath |
+| ------ | ----------- | ---------- | ---------------- | ------------ |
+| auto   | yes         | yes        | PREFER_ON_DEVICE | on_device    |
+| auto   | yes         | no         | ONLY_ON_DEVICE   | on_device    |
+| auto   | no          | yes        | ONLY_IN_CLOUD    | in_cloud     |
+| auto   | no          | no         | null             | none         |
+| device | yes         | any        | ONLY_ON_DEVICE   | on_device    |
+| device | no          | any        | null             | none         |
+| cloud  | any         | yes        | ONLY_IN_CLOUD    | in_cloud     |
+| cloud  | any         | no         | null             | none         |
 
 The `reason` string names the blocker in plain English (offline, not configured, App Check not
 responding, API missing, not downloaded yet, adapter missing). `classifyPath(expected, source)` maps
@@ -92,6 +92,7 @@ readConfig missing -> initializeApp(LOCAL_PLACEHOLDER_OPTIONS, 'lectureloop-gate
 firebaseStatus.ready -> {kind: 'configured', ai, appCheck} (allowCloud=true)
 firebaseStatus error -> same as local, with the error shown
 ```
+
 `src/firebase.ts` is imported for `firebaseStatus` and is unchanged, so App Check stays initialized
 before any cloud call. Placeholder values are plainly fake (`local-placeholder-not-a-real-key`).
 

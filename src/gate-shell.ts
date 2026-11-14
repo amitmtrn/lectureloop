@@ -216,9 +216,12 @@ export function initGateShell(deps: ShellDeps): Shell {
   // ---- App Check ---------------------------------------------------------------
 
   let checkingAppCheck = false;
+  /** An `online` event arrived while a wait was running. */
+  let onlineDuringCheck = false;
   async function checkAppCheck(): Promise<void> {
     if (fb.kind !== 'configured' || !allowsCloud(fb) || checkingAppCheck) return;
     checkingAppCheck = true;
+    onlineDuringCheck = false;
     env = { ...env, appCheck: 'checking' };
     renderEnv();
     try {
@@ -228,12 +231,15 @@ export function initGateShell(deps: ShellDeps): Shell {
       checkingAppCheck = false;
       renderEnv();
     }
+    // The network came back during the wait, so the reCAPTCHA load may have failed for that reason.
+    if (onlineDuringCheck && env.appCheck === 'stuck') void checkAppCheck();
   }
 
   function setOnline(): void {
     const wasOnline = env.online;
     env = { ...env, online: deps.isOnline() };
     renderEnv();
+    if (env.online && checkingAppCheck) onlineDuringCheck = true;
     // A blocked reCAPTCHA load may just have been a dead network: try again.
     if (!wasOnline && env.online && env.appCheck === 'stuck') void checkAppCheck();
   }

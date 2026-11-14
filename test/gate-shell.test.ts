@@ -115,6 +115,30 @@ describe('App Check retry', () => {
     expect(responds).toHaveBeenCalledTimes(2);
   });
 
+  it('checks again when online fires during the wait and the wait ends stuck', async () => {
+    let release!: (ok: boolean) => void;
+    const responds = vi
+      .fn<ShellDeps['appCheckResponds']>()
+      .mockImplementationOnce(() => new Promise<boolean>((r) => (release = r)))
+      .mockResolvedValue(true);
+    const shell = initGateShell(makeDeps({ fb: configured, appCheckResponds: responds }));
+    shell.start();
+    await vi.waitFor(() => expect(shell.ctx.env().appCheck).toBe('checking'));
+    window.dispatchEvent(new Event('online'));
+    release(false);
+    await vi.waitFor(() => expect(shell.ctx.env().appCheck).toBe('responding'));
+    expect(responds).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not loop when no online event arrived during a stuck wait', async () => {
+    const responds = vi.fn<ShellDeps['appCheckResponds']>().mockResolvedValue(false);
+    const shell = initGateShell(makeDeps({ fb: configured, appCheckResponds: responds }));
+    shell.start();
+    await vi.waitFor(() => expect(shell.ctx.env().appCheck).toBe('stuck'));
+    await new Promise((r) => setTimeout(r, 20));
+    expect(responds).toHaveBeenCalledTimes(1);
+  });
+
   it('does not touch App Check on the placeholder app', async () => {
     const deps = makeDeps();
     initGateShell(deps).start();

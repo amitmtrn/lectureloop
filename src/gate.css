@@ -572,3 +572,135 @@ textarea {
   background: rgb(251 113 133 / 12%);
   border-radius: 6px;
 }
+
+/* Batch */
+.verdict {
+  margin-top: 1.5rem;
+  padding: 1.2rem 1.6rem;
+  border-radius: 16px;
+  border: 4px solid currentcolor;
+}
+
+.verdict .word {
+  display: block;
+  font-size: clamp(3.5rem, 8vw, 6rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.verdict p {
+  margin: 0.5rem 0 0;
+  color: var(--text);
+  font-size: 1.2rem;
+}
+
+.verdict-go {
+  color: var(--good);
+}
+
+.verdict-nogo {
+  color: var(--bad);
+}
+
+.verdict-inconclusive {
+  color: var(--warn);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 1rem;
+  margin: 1.25rem 0;
+}
+
+.tile {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1rem 1.2rem;
+}
+
+.tile .big {
+  display: block;
+  font-size: 3.4rem;
+  font-weight: 800;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+
+.tile .cap {
+  display: block;
+  color: var(--muted);
+}
+
+.tile .rule {
+  display: block;
+  margin-top: 0.3rem;
+  font-weight: 700;
+}
+
+.rule.pass::before {
+  content: '✓ pass · ';
+  color: var(--good);
+}
+
+.rule.fail::before {
+  content: '✕ fail · ';
+  color: var(--bad);
+}
+
+.table-wrap {
+  overflow-x: auto;
+  margin-bottom: 1.25rem;
+}
+
+table.results {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1.1rem;
+}
+
+table.results th,
+table.results td {
+  text-align: left;
+  padding: 0.55rem 0.8rem;
+  border-bottom: 1px solid var(--line);
+}
+
+table.results th {
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+table.results .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+td.v-correct {
+  color: var(--good);
+}
+
+td.v-partial {
+  color: var(--warn);
+}
+
+td.v-missed,
+td.v-failed {
+  color: var(--bad);
+}
+
+td.v-wait {
+  color: var(--muted);
+}
+
+tr.disagree td:first-child {
+  box-shadow: inset 4px 0 var(--warn);
+}
+
+.verdict:empty {
+  display: none;
+}

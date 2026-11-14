@@ -110,6 +110,58 @@
         ></div>
       </section>
 
+      <section class="panel" aria-labelledby="batch-title">
+        <h2 id="batch-title">4. Run go/no-go</h2>
+        <p class="help">
+          One warm-up call (reported as cold latency), then 12 labelled answers graded on-device,
+          one at a time. GO needs: warm median &le; 5 s, agreement &ge; 70%, clearly wrong answers
+          caught &ge; 90%, all on-device.
+        </p>
+        <div class="row-actions">
+          <button type="button" id="run-batch" class="btn btn-device">Run go/no-go</button>
+          <span id="batch-status" class="status" role="status" aria-live="polite"></span>
+        </div>
+        <div
+          id="batch-progress"
+          class="progress"
+          role="progressbar"
+          aria-label="Go/no-go test progress"
+          aria-valuemin="0"
+          aria-valuemax="12"
+          aria-valuenow="0"
+          hidden
+        >
+          <div id="batch-fill" class="progress-fill"></div>
+        </div>
+
+        <div id="batch-out" hidden>
+          <div id="verdict" class="verdict" role="status" aria-live="polite" tabindex="-1"></div>
+          <div id="metrics" class="tiles"></div>
+          <div class="table-wrap">
+            <table class="results">
+              <caption class="visually-hidden">
+                Expected and actual verdict for each answer
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Answer</th>
+                  <th scope="col">Expected</th>
+                  <th scope="col">Got</th>
+                  <th scope="col" class="num">Latency</th>
+                  <th scope="col">Path</th>
+                </tr>
+              </thead>
+              <tbody id="batch-rows"></tbody>
+            </table>
+          </div>
+          <div class="row-actions">
+            <button type="button" id="copy-json" class="btn btn-ghost">Copy JSON</button>
+            <button type="button" id="copy-md" class="btn btn-ghost">Copy Markdown</button>
+            <span id="copy-status" class="status" role="status" aria-live="polite"></span>
+          </div>
+        </div>
+      </section>
+
       <footer class="foot">
         <p>
           Nothing leaves this page except cloud calls you start yourself. Results are kept only in

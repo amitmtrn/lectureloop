@@ -13,6 +13,7 @@ import {
 } from './gate-env';
 import { $, el, statusRow } from './gate-dom';
 import { allowsCloud, initGateFirebase } from './gate-firebase';
+import { initBatch } from './gate-batch';
 import { initSingleGrade } from './gate-single';
 import { getGradeModel, prepareGradeDevice } from './grade';
 import { InferenceMode } from 'firebase/ai';
@@ -179,6 +180,7 @@ window.addEventListener('offline', setOnline);
 
 const ctx = { fb, env: () => env, routeInput: currentRouteInput, onEnv: onEnvChange };
 initSingleGrade(ctx);
+initBatch(ctx);
 renderEnv();
 void refreshAvailability();
 

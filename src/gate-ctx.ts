@@ -3,8 +3,9 @@ import type { EnvSnapshot } from './gate-env';
 import type { RouteInput, UserChoice } from './routing';
 
 /**
- * One on-device call at a time across the page. The SDK destroys the previous session when a
- * new one is created on the same adapter, so overlapping calls abort each other and skew timing.
+ * One model call at a time across the page. Overlapping calls would skew the latency numbers
+ * and compete for the same hardware. (In @firebase/ai 3.0.0 each GenerativeModel, one per mode,
+ * has its own adapter and session, so this is about timing, not shared sessions.)
  */
 export interface InferenceLock {
   /** Returns a release function, or null when another call holds the lock. */

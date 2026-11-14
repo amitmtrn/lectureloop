@@ -135,7 +135,7 @@ placeholder app in `ONLY_ON_DEVICE`: the fake session is prompted and `fetch` is
 
 ## Review fixes 2
 
-- **One inference at a time.** `GateCtx.inference` is an `InferenceLock` (`tryAcquire`, `busy`, `onChange`) created by the shell. Grade and Run take it for the whole call or batch and release it in `finally`; each disables its button on `onChange`. The SDK's `createSession()` destroys the previous session on an adapter, so overlapping calls would abort each other (a failed row counts as disagreement) and inflate the warm median.
+- **One inference at a time.** `GateCtx.inference` is an `InferenceLock` (`tryAcquire`, `busy`, `onChange`) created by the shell. Grade and Run take it for the whole call or batch and release it in `finally`; each disables its button on `onChange`. Overlapping calls on one model's adapter abort each other (`createSession()` destroys the previous session), and calls on different modes still skew timing, so overlapping calls would also inflate the warm median. A failed row counts as disagreement.
 - **Colour.** The page background uses a neutral tint; teal and violet appear only for on-device and cloud.
 - **App Check retry.** The shell remembers an `online` event that arrives during a wait. When the wait ends `stuck`, it checks again once per such event.
 - **Report.** `environmentRecord` writes `Firebase config` as `present`, `present, init failed: <error>` or `not configured`, and adds `App Check`.
@@ -160,3 +160,4 @@ placeholder app in `ONLY_ON_DEVICE`: the fake session is prompted and `fetch` is
 - **Cloud hint (T40).** `environmentFixes` no longer reports "Cloud is not configured". `cloudHint(env)` returns that text (or null when configured or when init failed, which has its own fix). The shell renders it as a separate `li.fix-info` after "Nothing to fix", so the device verdict stays clear without a Firebase project (R2.18).
 - **Late-call wording (T41).** `LATE_CALL_NOTE` says "previous model call", because a timed-out cloud call holds the lock too (R5.11).
 - **Prepare errors (T42).** A failed Prepare passes through `gateFriendlyError(err, ONLY_ON_DEVICE)`, like Grade and Run, and shows `title. detail` (R4.4).
+- **Lock rationale (T43).** In `@firebase/ai` 3.0.0 each `GenerativeModel` (one per mode) has its own `ChromeAdapterImpl` and `oldSession`, so the `PREFER_ON_DEVICE` and `ONLY_ON_DEVICE` models do not destroy each other's sessions. The lock stays for timing and for late calls.

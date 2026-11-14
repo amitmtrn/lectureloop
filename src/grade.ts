@@ -205,7 +205,8 @@ export function createGradeModel(ai: AI, mode: InferenceMode): GenerativeModel {
   });
 }
 
-// One model per (AI instance, mode): the SDK tracks the on-device download on the model's adapter.
+// One model per (AI instance, mode). Each model owns its own on-device adapter and session, and
+// the SDK tracks the on-device download on that adapter.
 const modelCache = new WeakMap<AI, Map<InferenceMode, GenerativeModel>>();
 
 export function getGradeModel(ai: AI, mode: InferenceMode): GenerativeModel {
@@ -230,8 +231,8 @@ export const WARMUP_TIMEOUT_MS = 180_000;
 export class GradeTimeoutError extends Error {
   /**
    * @param settled Resolves when the abandoned SDK call finally settles (either way). Callers
-   * hold the shared inference lock until then, because a late `createSession` would destroy the
-   * session of the next call.
+   * hold the shared inference lock until then, because a late `createSession` on the same
+   * model (adapter) would destroy the session of the next call.
    */
   constructor(
     public readonly timeoutMs: number,

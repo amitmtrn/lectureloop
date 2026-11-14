@@ -9,7 +9,7 @@ import {
   type EnvSnapshot,
 } from './gate-env';
 import { createInferenceLock, type GateCtx } from './gate-ctx';
-import { $, el, statusRow } from './gate-dom';
+import { $, el, setChildren, statusRow } from './gate-dom';
 import { allowsCloud, type GateFirebase } from './gate-firebase';
 import type { DeviceAvailability, RouteInput } from './routing';
 
@@ -133,12 +133,13 @@ export function initGateShell(deps: ShellDeps): Shell {
     els.stationCloud.classList.toggle('is-off', !env.configured);
 
     const fixes = environmentFixes(env);
-    els.fixes.replaceChildren(
-      ...(!env.probed
+    setChildren(
+      els.fixes,
+      !env.probed
         ? [el('li', undefined, 'Checking this machine…')]
         : fixes.length === 0
           ? [el('li', 'fix-ok', 'Nothing to fix. Nano is ready for the test below.')]
-          : fixes.map((f) => el('li', undefined, f.text))),
+          : fixes.map((f) => el('li', undefined, f.text)),
     );
 
     els.prepare.disabled = !env.languageModelExists || !env.adapterAttached || preparing;

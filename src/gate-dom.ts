@@ -50,3 +50,14 @@ export function verdictStamp(verdict: keyof typeof STAMPS): HTMLSpanElement {
   const { icon, text } = STAMPS[verdict];
   return el('span', `stamp stamp-${verdict}`, `${icon} ${text}`);
 }
+
+/**
+ * Replace a node's children only when the rendered markup would change. Live regions that are
+ * rebuilt with identical content can be re-announced by screen readers.
+ */
+export function setChildren(parent: HTMLElement, children: (Node | string)[]): void {
+  const probe = document.createElement(parent.tagName);
+  probe.replaceChildren(...children);
+  if (probe.innerHTML === parent.innerHTML) return;
+  parent.replaceChildren(...children);
+}

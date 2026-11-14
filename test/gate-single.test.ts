@@ -81,6 +81,19 @@ describe('answer length (R6.11)', () => {
   });
 });
 
+describe('plan live region', () => {
+  it('keeps the same nodes when the environment re-renders with an unchanged plan', () => {
+    const listeners: (() => void)[] = [];
+    const ctx = makeCtx();
+    ctx.onEnv = (fn) => (listeners.push(fn), fn());
+    initSingleGrade(ctx);
+    const first = $id('plan').firstChild;
+    expect(first).not.toBeNull();
+    listeners.forEach((fn) => fn());
+    expect($id('plan').firstChild).toBe(first);
+  });
+});
+
 describe('single grade UI', () => {
   it('asks for an answer and makes no SDK call when the answer is empty (R6.7)', async () => {
     initSingleGrade(makeCtx());

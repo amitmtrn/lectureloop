@@ -37,6 +37,17 @@ beforeEach(() => {
   vi.spyOn(console, 'warn').mockImplementation(() => {});
 });
 
+describe('live regions', () => {
+  it('does not rebuild #fixes when a re-render has the same text', async () => {
+    const shell = initGateShell(makeDeps());
+    shell.start();
+    await vi.waitFor(() => expect(text('fixes')).not.toContain('Checking this machine'));
+    const li = document.querySelector('#fixes li');
+    await shell.refresh();
+    expect(document.querySelector('#fixes li')).toBe(li);
+  });
+});
+
 describe('environment panel', () => {
   it('says it is checking, with no device fixes, until the first probe resolves', async () => {
     let resolve!: (p: Probe) => void;

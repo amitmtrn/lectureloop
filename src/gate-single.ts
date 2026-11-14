@@ -1,5 +1,5 @@
 import { InferenceMode } from 'firebase/ai';
-import { $, el, pathBadge, verdictStamp, type PathLabel } from './gate-dom';
+import { $, el, pathBadge, setChildren, verdictStamp, type PathLabel } from './gate-dom';
 import type { GateCtx } from './gate-ctx';
 import { gateFriendlyError } from './gate-errors';
 import { allowsCloud } from './gate-firebase';
@@ -37,7 +37,7 @@ export function initSingleGrade(ctx: GateCtx): void {
       plan.expectedPath === 'none'
         ? el('span', 'chip chip-unknown', 'BLOCKED')
         : pathBadge(plan.expectedPath);
-    els.plan.replaceChildren(badge, plan.reason);
+    setChildren(els.plan, [badge, plan.reason]);
     // Teal and violet mean "runs on-device / in the cloud": colour the button only once that is known.
     els.grade.className = `btn ${
       plan.expectedPath === 'on_device'

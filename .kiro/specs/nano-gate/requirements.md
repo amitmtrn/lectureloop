@@ -108,6 +108,7 @@ response's `inferenceSource`.
 - R7.17 The progress bar's `aria-valuemax` shall come from the size of the labelled set, not a literal.
 - R7.18 If no answer produced a result on-device (for example every answer was malformed twice after a working warm-up), then the INCONCLUSIVE explanation shall say that no answer produced a result on-device and shall not claim that Nano did not run.
 - R7.19 If the batch stops on a timeout after at least one answer was graded, then the page shall enable "Copy JSON" and "Copy Markdown" for a report of the graded rows whose verdict is INCONCLUSIVE. If no answer was graded, copying stays disabled.
+- R7.20 If an item failed, then its error text shall be visible in the "Got" cell (not only in a tooltip) and listed under a "Failures" heading in the Markdown report; the JSON keeps it as `error`.
 
 ## R8 Routing
 

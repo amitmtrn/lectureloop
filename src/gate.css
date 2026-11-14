@@ -703,6 +703,14 @@ td.v-failed {
   color: var(--bad);
 }
 
+td .row-error {
+  display: block;
+  margin-top: 0.25rem;
+  font-weight: 400;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
 td.v-wait {
   color: var(--muted);
 }

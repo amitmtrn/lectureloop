@@ -167,3 +167,4 @@ placeholder app in `ONLY_ON_DEVICE`: the fake session is prompted and `fetch` is
 - **Call failures (T44).** See the verdict bullet under "Batch summary": `BatchItem.errorKind` separates `parse` from `call` failures (R7.6, R7.8).
 - **Prefer reason (T45).** The `PREFER_ON_DEVICE` reason says "It falls back to the cloud if Nano is not available". The SDK picks the cloud only when availability is not `available` at call time; an error during an on-device call is thrown (R8.9).
 - **Timeout hint (T46).** `gateFriendlyError` picks the timeout hint from `mode` (`TIMEOUT_HINT`): on-device-internals, connection, or both for the prefer modes (R5.12).
+- **Failed-row error (T47).** `renderRow` appends the error as `<small class="row-error">` inside the Got cell, so keyboard and screen-reader users read it. `toMarkdown` adds a `## Failures` list (`failureLines`) when any item has an `error` (R7.20).

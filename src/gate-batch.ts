@@ -106,7 +106,7 @@ export function initBatch(ctx: GateCtx): void {
     const got = item.got ?? 'failed';
     if (item.got !== item.expected) tr.className = 'disagree';
     const gotCell = el('td', `v-${got}`, got);
-    if (item.error) gotCell.title = item.error;
+    if (item.error) gotCell.append(el('small', 'row-error', item.error));
     const path = el('td');
     path.append(pathBadge(item.path as PathLabel));
     tr.append(

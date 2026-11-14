@@ -192,6 +192,19 @@ describe('report output', () => {
     expect(md).toContain('Cold latency (warm-up call): 9000 ms');
     expect(md).toContain('| photo-correct | correct | correct | 1000 ms | 2 | on_device |');
     expect(md).toContain('| Answer | Expected | Got | Latency | Attempts | Path |');
+    expect(md).not.toContain('## Failures');
+  });
+
+  it('lists the error of a failed row in Markdown (R7.20)', () => {
+    const failed = {
+      ...item('correct', null, null, 'failed'),
+      id: 'x|y',
+      error: 'Local LanguageModel\nnot available',
+      answer: 'a',
+    };
+    const md = toMarkdown({ ...report, items: [...items, failed] });
+    expect(md).toContain('## Failures');
+    expect(md).toContain('- x\\|y: Local LanguageModel not available');
   });
 });
 

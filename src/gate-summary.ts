@@ -174,6 +174,12 @@ export const ms = (v: number | null): string => (v === null ? 'n/a' : `${Math.ro
 
 const cell = (text: string): string => text.replace(/\|/g, '\\|').replace(/\s+/g, ' ');
 
+function failureLines(report: GateReport): string[] {
+  const failed = report.items.filter((i) => i.error);
+  if (failed.length === 0) return [];
+  return ['## Failures', ...failed.map((i) => `- ${cell(i.id)}: ${cell(i.error ?? '')}`), ''];
+}
+
 export function toMarkdown(report: GateReport): string {
   const s = report.summary;
   const lines = [
@@ -200,6 +206,7 @@ export function toMarkdown(report: GateReport): string {
         `| ${cell(i.id)} | ${i.expected} | ${i.got ?? 'failed'} | ${ms(i.latencyMs)} | ${i.attempts ?? 'n/a'} | ${i.path} |`,
     ),
     '',
+    ...failureLines(report),
   ];
   return lines.join('\n');
 }

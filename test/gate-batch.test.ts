@@ -117,6 +117,21 @@ describe('batch go/no-go UI', () => {
     vi.unstubAllGlobals();
   });
 
+  it('shows the error of a failed row as visible text, not only a tooltip (R7.20)', async () => {
+    gradeAnswer
+      .mockResolvedValueOnce(grade('correct'))
+      .mockRejectedValueOnce(new Error('Model fell over'))
+      .mockResolvedValue(grade('correct'));
+    initBatch(makeCtx());
+    click('run-batch');
+    await vi.waitFor(() =>
+      expect(document.getElementById('copy-json')).toHaveProperty('disabled', false),
+    );
+    const small = document.querySelector('#batch-rows tr:first-child td.v-failed .row-error');
+    expect(small?.textContent).toBe('Model fell over');
+    expect(document.querySelector('#batch-rows td[title]')).toBeNull();
+  });
+
   it('sets aria-valuemax from the labelled set', async () => {
     gradeAnswer.mockResolvedValue(grade('correct'));
     initBatch(makeCtx());

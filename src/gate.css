@@ -110,6 +110,11 @@ a {
   color: #1a1033;
 }
 
+.chip-unknown {
+  background: var(--muted);
+  color: #10151f;
+}
+
 .chip-failed {
   background: var(--bad);
   color: #3a0a14;
@@ -352,4 +357,218 @@ code,
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+/* Card + grading */
+.card {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1.1rem 1.4rem;
+  margin-bottom: 1.25rem;
+}
+
+.card .q {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+}
+
+.card .label {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin: 0.8rem 0 0.2rem;
+}
+
+.card p {
+  margin: 0;
+}
+
+.card ul {
+  margin: 0.2rem 0 0;
+  padding-left: 1.3rem;
+}
+
+.field {
+  margin-bottom: 1rem;
+}
+
+.field label,
+.field legend {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+  padding: 0;
+}
+
+fieldset.field {
+  border: 0;
+  padding: 0;
+  margin: 0 0 1rem;
+}
+
+textarea {
+  width: 100%;
+  font: inherit;
+  color: var(--text);
+  background: #0e1420;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  resize: vertical;
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.choices label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  padding: 0.4rem 1.1rem;
+  cursor: pointer;
+  margin: 0;
+  font-weight: 650;
+}
+
+.choices input:checked + span {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.choices label:has(input:checked) {
+  border-color: var(--text);
+  background: var(--panel-2);
+}
+
+.plan {
+  margin: 0.6rem 0 0;
+  color: var(--muted);
+}
+
+.plan .chip {
+  margin-right: 0.6rem;
+}
+
+.result {
+  margin-top: 1.5rem;
+  border: 2px solid var(--line);
+  border-radius: 16px;
+  padding: 1.4rem 1.6rem;
+  background: var(--panel-2);
+}
+
+.result.is-device {
+  border-color: var(--device);
+}
+
+.result.is-cloud {
+  border-color: var(--cloud);
+}
+
+.result.is-failed {
+  border-color: var(--bad);
+}
+
+.result-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+}
+
+.stamp {
+  display: inline-block;
+  font-size: 2.6rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  padding: 0.1rem 1.1rem;
+  border: 4px solid currentcolor;
+  border-radius: 12px;
+  transform: rotate(-2deg);
+}
+
+.stamp-correct {
+  color: var(--good);
+}
+
+.stamp-partial {
+  color: var(--warn);
+}
+
+.stamp-missed {
+  color: var(--bad);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .stamp {
+    animation: stamp-in 0.28s ease-out;
+  }
+
+  @keyframes stamp-in {
+    from {
+      transform: rotate(-2deg) scale(1.5);
+      opacity: 0;
+    }
+  }
+}
+
+.result .chip {
+  font-size: 1.3rem;
+  padding: 0.25rem 1rem;
+}
+
+.metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 3rem;
+  margin: 1.2rem 0 0.4rem;
+}
+
+.metric .big {
+  display: block;
+  font-size: 3.2rem;
+  font-weight: 800;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+
+.metric .cap {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.result h3 {
+  margin: 1rem 0 0.3rem;
+  font-size: 1.1rem;
+}
+
+.result ul {
+  margin: 0;
+  padding-left: 1.3rem;
+}
+
+.warning {
+  margin-top: 1rem;
+  padding: 0.7rem 1rem;
+  border-left: 5px solid var(--warn);
+  background: rgb(251 191 36 / 12%);
+  border-radius: 6px;
+  font-weight: 650;
+}
+
+.blocked {
+  margin-top: 1rem;
+  padding: 0.7rem 1rem;
+  border-left: 5px solid var(--bad);
+  background: rgb(251 113 133 / 12%);
+  border-radius: 6px;
 }

@@ -13,6 +13,7 @@ import {
 } from './gate-env';
 import { $, el, statusRow } from './gate-dom';
 import { allowsCloud, initGateFirebase } from './gate-firebase';
+import { initSingleGrade } from './gate-single';
 import { getGradeModel, prepareGradeDevice } from './grade';
 import { InferenceMode } from 'firebase/ai';
 import type { RouteInput } from './routing';
@@ -34,7 +35,7 @@ let env: EnvSnapshot = {
 };
 
 /** Everything the routing function needs, from the current environment. */
-export function currentRouteInput(userChoice: RouteInput['userChoice']): RouteInput {
+function currentRouteInput(userChoice: RouteInput['userChoice']): RouteInput {
   return {
     userChoice,
     deviceAvailability: env.availability,
@@ -65,8 +66,9 @@ const APP_CHECK_TEXT: Record<AppCheckState, [string, 'ok' | 'warn' | 'bad' | 'of
 };
 
 const listeners: (() => void)[] = [];
-export function onEnvChange(fn: () => void): void {
+function onEnvChange(fn: () => void): void {
   listeners.push(fn);
+  fn();
 }
 
 function renderEnv(): void {
@@ -175,6 +177,8 @@ function setOnline(): void {
 window.addEventListener('online', setOnline);
 window.addEventListener('offline', setOnline);
 
+const ctx = { fb, env: () => env, routeInput: currentRouteInput, onEnv: onEnvChange };
+initSingleGrade(ctx);
 renderEnv();
 void refreshAvailability();
 

@@ -69,6 +69,47 @@
         </div>
       </section>
 
+      <section class="panel" aria-labelledby="one-title">
+        <h2 id="one-title">3. Grade one answer</h2>
+        <div class="card">
+          <p class="q" id="card-q"></p>
+          <p class="label">Reference answer</p>
+          <p id="card-ref"></p>
+          <p class="label">Key points</p>
+          <ul id="card-points"></ul>
+        </div>
+
+        <fieldset class="field">
+          <legend>Where should it run?</legend>
+          <div class="choices" id="choices">
+            <label><input type="radio" name="route" value="auto" checked /><span>Auto</span></label>
+            <label
+              ><input type="radio" name="route" value="device" /><span>Device only</span></label
+            >
+            <label><input type="radio" name="route" value="cloud" /><span>Cloud only</span></label>
+          </div>
+          <p id="plan" class="plan" role="status" aria-live="polite"></p>
+        </fieldset>
+
+        <div class="field">
+          <label for="answer">Your answer (edit it)</label>
+          <textarea id="answer" rows="3" spellcheck="true"></textarea>
+        </div>
+        <div class="row-actions">
+          <button type="button" id="grade" class="btn btn-device">Grade</button>
+          <span id="grade-status" class="status" role="status" aria-live="polite"></span>
+        </div>
+        <div
+          id="grade-result"
+          class="result"
+          hidden
+          tabindex="-1"
+          role="region"
+          aria-label="Grade result"
+          aria-live="polite"
+        ></div>
+      </section>
+
       <footer class="foot">
         <p>
           Nothing leaves this page except cloud calls you start yourself. Results are kept only in

@@ -1,10 +1,15 @@
 // @vitest-environment jsdom
+import type * as FirebaseAI from 'firebase/ai';
 import type { AI } from 'firebase/ai';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 // Vitest resolves firebase/ai to its Node build, which has no on-device adapter. Load the browser
 // build instead so the real adapter code path runs against a fake LanguageModel.
-vi.mock('firebase/ai', () => import('../node_modules/@firebase/ai/dist/esm/index.esm.js'));
+vi.mock('firebase/ai', async () => {
+  // @ts-expect-error the deep import ships no type declarations
+  const sdk = await import('../node_modules/@firebase/ai/dist/esm/index.esm.js');
+  return sdk as typeof FirebaseAI;
+});
 
 const { InferenceMode, getGenerativeModel } = await import('firebase/ai');
 import {

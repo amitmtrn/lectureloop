@@ -12,6 +12,7 @@ vi.mock('../src/grade', async (importOriginal) => ({
   gradeAnswer,
 }));
 
+const { GradeTimeoutError } = await import('../src/grade');
 const { initSingleGrade } = await import('../src/gate-single');
 const { initBatch } = await import('../src/gate-batch');
 
@@ -49,7 +50,7 @@ const ok = {
   attempts: 1,
 };
 const btn = (id: string) => document.getElementById(id) as HTMLButtonElement;
-const settle = () => new Promise((r) => setTimeout(r, 0));
+const settle_ = () => new Promise((r) => setTimeout(r, 0));
 
 beforeEach(() => {
   const html = readFileSync('gate.html', 'utf8');
@@ -71,6 +72,69 @@ describe('inference lock (one on-device call at a time)', () => {
     expect(lock.tryAcquire()).not.toBeNull();
   });
 
+  it('keeps the lock until a timed-out call settles', async () => {
+    const lock = createInferenceLock();
+    const release = lock.tryAcquire();
+    let settle!: () => void;
+    const settled = new Promise<void>((r) => (settle = r));
+    if (release) lock.holdUntil(release, settled);
+    expect(lock.busy()).toBe(true);
+    expect(lock.waitingForLate()).toBe(true);
+    expect(lock.tryAcquire()).toBeNull();
+    settle();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(lock.busy()).toBe(false);
+    expect(lock.waitingForLate()).toBe(false);
+  });
+
+  it('batch: a timed-out call keeps Run and Grade disabled, with a note, until it settles', async () => {
+    let settle!: () => void;
+    const settled = new Promise<void>((r) => (settle = r));
+    gradeAnswer.mockRejectedValue(new GradeTimeoutError(180_000, settled));
+    const ctx = makeCtx();
+    initSingleGrade(ctx);
+    initBatch(ctx);
+
+    btn('run-batch').click();
+    await vi.waitFor(() =>
+      expect(document.getElementById('batch-status')?.textContent).toContain(
+        'Still waiting for the previous on-device call',
+      ),
+    );
+    expect(btn('run-batch').disabled).toBe(true);
+    expect(btn('grade').disabled).toBe(true);
+    btn('run-batch').click();
+    await settle_();
+    expect(gradeAnswer).toHaveBeenCalledTimes(1);
+
+    settle();
+    await vi.waitFor(() => expect(btn('run-batch').disabled).toBe(false));
+    expect(btn('grade').disabled).toBe(false);
+    expect(document.getElementById('batch-status')?.textContent).toContain('You can run again');
+  });
+
+  it('single: a timed-out grade keeps the lock until the call settles', async () => {
+    let settle!: () => void;
+    const settled = new Promise<void>((r) => (settle = r));
+    gradeAnswer.mockRejectedValue(new GradeTimeoutError(60_000, settled));
+    const ctx = makeCtx();
+    initSingleGrade(ctx);
+    initBatch(ctx);
+
+    btn('grade').click();
+    await vi.waitFor(() =>
+      expect(document.getElementById('grade-status')?.textContent).toContain(
+        'Still waiting for the previous on-device call',
+      ),
+    );
+    expect(btn('grade').disabled).toBe(true);
+    expect(btn('run-batch').disabled).toBe(true);
+    settle();
+    await vi.waitFor(() => expect(btn('grade').disabled).toBe(false));
+    expect(btn('run-batch').disabled).toBe(false);
+  });
+
   it('disables Grade and starts no second call while the batch runs', async () => {
     let finish: (v: unknown) => void = () => {};
     gradeAnswer.mockImplementation(() => new Promise((r) => (finish = r)));
@@ -79,10 +143,10 @@ describe('inference lock (one on-device call at a time)', () => {
     initBatch(ctx);
 
     btn('run-batch').click();
-    await settle();
+    await settle_();
     expect(btn('grade').disabled).toBe(true);
     btn('grade').click();
-    await settle();
+    await settle_();
     expect(gradeAnswer).toHaveBeenCalledTimes(1); // the warm-up only
 
     gradeAnswer.mockResolvedValue(ok);
@@ -99,10 +163,10 @@ describe('inference lock (one on-device call at a time)', () => {
     initBatch(ctx);
 
     btn('grade').click();
-    await settle();
+    await settle_();
     expect(btn('run-batch').disabled).toBe(true);
     btn('run-batch').click();
-    await settle();
+    await settle_();
     expect(gradeAnswer).toHaveBeenCalledTimes(1);
     expect(gradeAnswer.mock.calls[0]?.[1]).toBe(InferenceMode.ONLY_ON_DEVICE);
 

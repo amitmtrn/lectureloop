@@ -279,6 +279,26 @@ describe('per-call timeout', () => {
     }
   });
 
+  it('exposes when the abandoned call finally settles', async () => {
+    vi.useFakeTimers();
+    try {
+      let finish: (v: number) => void = () => {};
+      const p = withTimeout(new Promise<number>((r) => (finish = r)), 1000);
+      const caught = p.catch((e: unknown) => e);
+      await vi.advanceTimersByTimeAsync(1000);
+      const err = (await caught) as InstanceType<typeof GradeTimeoutError>;
+      let settled = false;
+      void err.settled.then(() => (settled = true));
+      await vi.advanceTimersByTimeAsync(10);
+      expect(settled).toBe(false);
+      finish(1);
+      await vi.advanceTimersByTimeAsync(10);
+      expect(settled).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('gradeAnswer fails with a timeout when the on-device call hangs', async () => {
     generateContent.mockReturnValue(new Promise(() => {}));
     await expect(

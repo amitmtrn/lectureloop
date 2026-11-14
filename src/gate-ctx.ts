@@ -10,12 +10,20 @@ export interface InferenceLock {
   /** Returns a release function, or null when another call holds the lock. */
   tryAcquire: () => (() => void) | null;
   busy: () => boolean;
+  /**
+   * Keeps the lock until `settled` resolves, then releases it. For a call that timed out but is
+   * still alive inside the SDK.
+   */
+  holdUntil: (release: () => void, settled: Promise<void>) => void;
+  /** True while the lock is held only for a timed-out call that has not settled. */
+  waitingForLate: () => boolean;
   /** Calls `fn` whenever the lock is taken or released. */
   onChange: (fn: () => void) => void;
 }
 
 export function createInferenceLock(): InferenceLock {
   let held = false;
+  let late = false;
   const listeners: Array<() => void> = [];
   const notify = (): void => listeners.forEach((fn) => fn());
   return {
@@ -32,11 +40,24 @@ export function createInferenceLock(): InferenceLock {
       };
     },
     busy: () => held,
+    waitingForLate: () => late,
+    holdUntil: (release, settled) => {
+      late = true;
+      notify();
+      void settled.then(() => {
+        late = false;
+        release();
+      });
+    },
     onChange: (fn) => {
       listeners.push(fn);
     },
   };
 }
+
+export const LATE_CALL_NOTE =
+  'Still waiting for the previous on-device call to finish. If this does not clear, reload the page.';
+export const LATE_CALL_DONE = 'The previous on-device call finished. You can run again.';
 
 /** What the gate sections need from the page shell. */
 export interface GateCtx {

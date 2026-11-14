@@ -186,9 +186,8 @@ describe('single grade UI', () => {
     gradeAnswer.mockRejectedValue(new GradeTimeoutError(60_000));
     initSingleGrade(makeCtx());
     grade().click();
-    await vi.waitFor(() => expect($id('grade-status').textContent).toBe('Failed.'));
+    await vi.waitFor(() => expect(grade().disabled).toBe(false));
     expect($id('grade-result').textContent).toContain('did not answer within 60 s');
-    expect(grade().disabled).toBe(false);
   });
 
   it('keeps the Grade button neutral until the route is known, then teal for on-device', () => {

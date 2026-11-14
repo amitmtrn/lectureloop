@@ -1,10 +1,10 @@
 import { InferenceMode } from 'firebase/ai';
 import { $, el, pathBadge, setChildren, verdictStamp, type PathLabel } from './gate-dom';
-import type { GateCtx } from './gate-ctx';
+import { LATE_CALL_DONE, LATE_CALL_NOTE, type GateCtx } from './gate-ctx';
 import { gateFriendlyError } from './gate-errors';
 import { allowsCloud } from './gate-firebase';
 import { SAMPLE_ANSWER, SAMPLE_CARD } from './gate-data';
-import { gradeAnswer, type GradeResult } from './grade';
+import { GradeTimeoutError, gradeAnswer, type GradeResult } from './grade';
 import { classifyPath, planRoute, type UserChoice } from './routing';
 
 export function initSingleGrade(ctx: GateCtx): void {
@@ -94,8 +94,16 @@ export function initSingleGrade(ctx: GateCtx): void {
   }
 
   // Grade is also disabled while the go/no-go batch holds the shared lock.
+  let noted = false;
   ctx.inference.onChange(() => {
     els.grade.disabled = ctx.inference.busy();
+    if (ctx.inference.waitingForLate()) {
+      els.status.textContent = LATE_CALL_NOTE;
+      noted = true;
+    } else if (noted) {
+      noted = false;
+      els.status.textContent = LATE_CALL_DONE;
+    }
   });
   els.grade.addEventListener('click', () => {
     void onGrade();
@@ -119,6 +127,7 @@ export function initSingleGrade(ctx: GateCtx): void {
     const release = ctx.inference.tryAcquire();
     if (!release) return;
     els.status.textContent = 'Grading…';
+    let late: GradeTimeoutError | null = null;
     try {
       const res = await gradeAnswer(
         ctx.fb.ai,
@@ -136,11 +145,13 @@ export function initSingleGrade(ctx: GateCtx): void {
       els.result.focus();
     } catch (err) {
       console.error('[LectureLoop] grade failed', err);
+      if (err instanceof GradeTimeoutError) late = err;
       const friendly = gateFriendlyError(err, plan.mode ?? InferenceMode.ONLY_ON_DEVICE);
       showBlocked(`${friendly.title}. ${friendly.detail}`);
       els.status.textContent = 'Failed.';
     } finally {
-      release();
+      if (late) ctx.inference.holdUntil(release, late.settled);
+      else release();
     }
   }
 }

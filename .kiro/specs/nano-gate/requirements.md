@@ -66,6 +66,7 @@ response's `inferenceSource`.
 - R5.9 Before an `ONLY_ON_DEVICE` call, the runner shall check `hasOnDeviceAdapter`; if the response of an `ONLY_ON_DEVICE` call did not come from the device it shall fail.
 
 - R5.10 If a single model call has not settled after a timeout (default 60 s; 180 s for the batch warm-up call), then the runner shall reject with a timeout error that names the limit. The call itself cannot be cancelled, but the page shall recover.
+- R5.11 If a call timed out, then the timeout error shall expose a promise that settles when the abandoned SDK call finally settles, and the page shall keep the shared inference lock until then, because a late `createSession` would destroy the session of the next call. While the lock is held for that reason, Grade and Run shall stay disabled and the status text shall say "Still waiting for the previous on-device call to finish", and shall say that the call finished once it did.
 
 ## R6 Single grade
 

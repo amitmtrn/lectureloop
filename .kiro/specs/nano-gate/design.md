@@ -1,3 +1,1 @@
-## Review fixes 4
-
-- **All items failed.** `summarizeBatch` explains an empty on-device set as "No answer produced a result on-device", because the warm-up may have run fine (R7.18).
+- **Late call after a timeout.** `GradeTimeoutError.settled` resolves when the abandoned promise settles (either way). `InferenceLock.holdUntil(release, settled)` keeps the lock until then and `waitingForLate()` tells the UI why it is busy; Grade and Run show `LATE_CALL_NOTE` in their status and `LATE_CALL_DONE` afterwards. Both the batch (warm-up or answer timeout) and the single grade use it. If the call never settles, the note tells the user to reload.

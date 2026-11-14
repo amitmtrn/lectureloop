@@ -41,3 +41,4 @@ Review fixes 3 (third review):
 Review fixes 4 (fourth review, NITs):
 
 - [x] T29 Neutral wording when no answer produced a result: "No answer produced a result on-device". (R7.18)
+- [x] T30 Hold the inference lock until a timed-out SDK call settles; show "Still waiting for the previous on-device call". (R5.11, R6.9)

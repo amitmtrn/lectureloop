@@ -1,4 +1,4 @@
-import type { GateCtx } from './gate-ctx';
+import { LATE_CALL_DONE, LATE_CALL_NOTE, type GateCtx } from './gate-ctx';
 import { LABELLED_SET, toGradeInput } from './gate-data';
 import { $, el, pathBadge, type PathLabel } from './gate-dom';
 import {
@@ -131,9 +131,28 @@ export function initBatch(ctx: GateCtx): void {
     };
   }
 
+  function buildReport(summary: BatchSummary, cold: number, items: BatchItem[]): GateReport {
+    return {
+      generatedAt: new Date().toISOString(),
+      environment: environmentRecord(),
+      thresholds: GO_THRESHOLDS,
+      coldLatencyMs: cold,
+      summary,
+      items: items.map((it, i) => ({ ...it, answer: LABELLED_SET[i]?.answer ?? '' })),
+    };
+  }
+
   // Run is also disabled while a single grade holds the shared lock.
+  let noted = false;
   ctx.inference.onChange(() => {
     els.run.disabled = ctx.inference.busy();
+    if (ctx.inference.waitingForLate()) {
+      els.status.textContent = LATE_CALL_NOTE;
+      noted = true;
+    } else if (noted) {
+      noted = false;
+      els.status.textContent = LATE_CALL_DONE;
+    }
   });
 
   async function run(): Promise<void> {
@@ -167,6 +186,7 @@ export function initBatch(ctx: GateCtx): void {
     els.tableWrap.hidden = false;
     els.rows.replaceChildren(...LABELLED_SET.map((_a, i) => renderRow(null, i)));
     setProgress(0);
+    let late: GradeTimeoutError | null = null;
     try {
       const first = LABELLED_SET[0];
       if (!first) return;
@@ -182,6 +202,7 @@ export function initBatch(ctx: GateCtx): void {
         cold = warm.latencyMs;
       } catch (err) {
         console.error('[LectureLoop] warm-up failed', err);
+        if (err instanceof GradeTimeoutError) late = err;
         const f = gateFriendlyError(err, mode);
         inconclusive(`Warm-up failed. ${f.title}. ${f.detail}`);
         return;
@@ -206,7 +227,7 @@ export function initBatch(ctx: GateCtx): void {
         } catch (err) {
           console.warn('[LectureLoop] grading failed', spec.id, err);
           if (err instanceof GradeTimeoutError) {
-            timedOut = err;
+            timedOut = late = err;
             break;
           }
           item = {
@@ -226,29 +247,22 @@ export function initBatch(ctx: GateCtx): void {
 
       if (timedOut) {
         const f = gateFriendlyError(timedOut, mode);
-        inconclusive(
-          `Stopped at answer ${graded + 1} of ${LABELLED_SET.length}. ${f.title}. ${f.detail}`,
-        );
+        const why = `Stopped at answer ${graded + 1} of ${LABELLED_SET.length}. ${f.title}. ${f.detail}`;
+        inconclusive(why);
         return;
       }
 
       const summary = summarizeBatch(items);
       renderVerdict(summary);
       renderMetrics(summary, cold);
-      report = {
-        generatedAt: new Date().toISOString(),
-        environment: environmentRecord(),
-        thresholds: GO_THRESHOLDS,
-        coldLatencyMs: cold,
-        summary,
-        items: items.map((it, i) => ({ ...it, answer: LABELLED_SET[i]?.answer ?? '' })),
-      };
+      report = buildReport(summary, cold, items);
       els.copyJson.disabled = els.copyMd.disabled = false;
       els.status.textContent = `Done: ${summary.verdict}.`;
       els.verdict.focus();
     } finally {
       els.progress.hidden = true;
-      release();
+      if (late) ctx.inference.holdUntil(release, late.settled);
+      else release();
     }
   }
 

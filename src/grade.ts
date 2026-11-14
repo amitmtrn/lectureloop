@@ -228,7 +228,15 @@ export const GRADE_TIMEOUT_MS = 60_000;
 export const WARMUP_TIMEOUT_MS = 180_000;
 
 export class GradeTimeoutError extends Error {
-  constructor(public readonly timeoutMs: number) {
+  /**
+   * @param settled Resolves when the abandoned SDK call finally settles (either way). Callers
+   * hold the shared inference lock until then, because a late `createSession` would destroy the
+   * session of the next call.
+   */
+  constructor(
+    public readonly timeoutMs: number,
+    public readonly settled: Promise<void> = Promise.resolve(),
+  ) {
     super(`The model did not answer within ${Math.round(timeoutMs / 1000)} s.`);
     this.name = 'GradeTimeoutError';
   }
@@ -236,11 +244,16 @@ export class GradeTimeoutError extends Error {
 
 /**
  * Rejects with `GradeTimeoutError` if `promise` has not settled after `ms`. The underlying call
- * cannot be cancelled (the SDK takes no abort signal for on-device), so a late result is dropped.
+ * cannot be cancelled (the SDK takes no abort signal for on-device), so a late result is dropped;
+ * the error's `settled` promise tells when it is really over.
  */
 export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  const settled = promise.then(
+    () => undefined,
+    () => undefined,
+  );
   return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new GradeTimeoutError(ms)), ms);
+    const timer = setTimeout(() => reject(new GradeTimeoutError(ms, settled)), ms);
     promise.then(
       (value) => {
         clearTimeout(timer);

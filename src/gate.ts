@@ -5,7 +5,7 @@ import { appCheckResponds, firebaseStatus } from './firebase';
 import { initBatch } from './gate-batch';
 import { probeAvailability, probeBrowser } from './gate-env';
 import { initGateFirebase } from './gate-firebase';
-import { initGateShell } from './gate-shell';
+import { initGateShell, PREPARE_STALL_MS } from './gate-shell';
 import { initSingleGrade } from './gate-single';
 import { getGradeModel, prepareGradeDevice } from './grade';
 
@@ -19,6 +19,7 @@ const shell = initGateShell({
   prepare: (onProgress) => prepareGradeDevice(fb.ai, onProgress),
   appCheckResponds,
   appCheckWaitMs: 8000,
+  prepareStallMs: PREPARE_STALL_MS,
   pollMs: 3000,
   isOnline: () => navigator.onLine,
 });

@@ -27,6 +27,11 @@ export interface ShellDeps {
   prepare: (onProgress: (fraction: number) => void) => Promise<void>;
   appCheckResponds: (appCheck: AppCheck, timeoutMs: number) => Promise<boolean>;
   appCheckWaitMs: number;
+  /**
+   * Prepare gives up after this long without a progress event (default `PREPARE_STALL_MS`), because
+   * the SDK call cannot be cancelled and would otherwise leave the button disabled for good.
+   */
+  prepareStallMs?: number;
   /** Re-probe interval while the model is downloading. */
   pollMs: number;
   isOnline: () => boolean;
@@ -47,6 +52,9 @@ const APP_CHECK_TEXT: Record<AppCheckState, [string, 'ok' | 'warn' | 'bad' | 'of
   stuck: ['not responding', 'bad'],
   error: ['init failed', 'bad'],
 };
+
+/** Default for `ShellDeps.prepareStallMs`. */
+export const PREPARE_STALL_MS = 120_000;
 
 /** Announce download progress at most once per 10% step. */
 export const PROGRESS_ANNOUNCE_STEP = 10;
@@ -199,27 +207,53 @@ export function initGateShell(deps: ShellDeps): Shell {
       pct >= 100 ? 'Downloaded. Loading the model…' : `Downloading Gemini Nano… ${pct}%`;
   }
 
+  /** Identifies the current Prepare; results of an abandoned one are ignored. */
+  let prepareRun = 0;
+
   els.prepare.addEventListener('click', () => {
     if (preparing) return;
     preparing = true;
     lastBucket = -1;
+    const run = ++prepareRun;
+    const stallMs = deps.prepareStallMs ?? PREPARE_STALL_MS;
+    let stallTimer: ReturnType<typeof setTimeout> | undefined;
+    const finish = async (): Promise<void> => {
+      clearTimeout(stallTimer);
+      preparing = false;
+      showProgress(null);
+      await refresh();
+    };
+    const armStall = (): void => {
+      clearTimeout(stallTimer);
+      stallTimer = setTimeout(() => {
+        if (run !== prepareRun) return;
+        prepareRun++;
+        els.prepareStatus.textContent =
+          'Preparing Gemini Nano is taking too long (no progress). Press "Prepare Nano" to try again, or reload the page if it keeps happening.';
+        void finish();
+      }, stallMs);
+    };
     els.prepare.disabled = true;
     els.prepareStatus.textContent = 'Preparing Gemini Nano…';
+    armStall();
     // Called synchronously from the click so Chrome sees the user gesture.
-    const ready = deps.prepare(showProgress);
+    const ready = deps.prepare((fraction) => {
+      if (run !== prepareRun) return;
+      armStall();
+      showProgress(fraction);
+    });
     void ready
       .then(() => {
-        els.prepareStatus.textContent = 'Gemini Nano is downloaded.';
+        if (run === prepareRun) els.prepareStatus.textContent = 'Gemini Nano is downloaded.';
       })
       .catch((err: unknown) => {
         console.error('[LectureLoop] prepare failed', err);
+        if (run !== prepareRun) return;
         const friendly = gateFriendlyError(err, InferenceMode.ONLY_ON_DEVICE);
         els.prepareStatus.textContent = `Could not prepare Nano. ${friendly.title}. ${friendly.detail}`;
       })
       .finally(async () => {
-        preparing = false;
-        showProgress(null);
-        await refresh();
+        if (run === prepareRun) await finish();
       });
   });
 

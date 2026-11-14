@@ -57,6 +57,7 @@ response's `inferenceSource`.
 - R4.4 If preparation fails, then the page shall show the error and the relevant fix.
 - R4.5 While the model downloads, the polite status text shall change at most once per 10% step, so screen readers are not flooded; the progress bar itself still updates on every event.
 - R4.6 The "Prepare Nano" success text shall say "Gemini Nano is downloaded." and the help text shall not claim the model is loaded, because an already-available model creates no session.
+- R4.7 If "Prepare Nano" shows no progress for 120 s, then the page shall stop waiting, say that preparing is taking too long and suggest trying again or reloading, and re-enable the button and the download poll. A result from the abandoned call shall be ignored.
 
 ## R5 Grading core
 

@@ -65,3 +65,4 @@ Review fixes 6 (sixth review, NITs):
 - [x] T45 Routing reason says the cloud is used only if Nano is not available. (R8.9)
 - [x] T46 Timeout text depends on the mode: connection hint for cloud calls. (R5.12)
 - [x] T47 Failed-row error is visible text in the table and listed in the Markdown report. (R7.20)
+- [x] T48 Prepare gives up after a progress stall: message, button and poll recover. (R4.7)

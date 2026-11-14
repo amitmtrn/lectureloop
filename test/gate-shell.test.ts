@@ -246,6 +246,62 @@ describe('Prepare Nano', () => {
     void shell;
   });
 
+  it('gives up when Prepare stalls, re-enables the button and ignores a late result (R4.7)', async () => {
+    let finish!: () => void;
+    let calls = 0;
+    const shell = initGateShell(
+      makeDeps({
+        prepareStallMs: 20,
+        prepare: () => {
+          calls++;
+          return new Promise<void>((r) => (finish = r));
+        },
+      }),
+    );
+    shell.start();
+    await vi.waitFor(() =>
+      expect(document.getElementById('prepare')).toHaveProperty('disabled', false),
+    );
+    click();
+    expect(document.getElementById('prepare')).toHaveProperty('disabled', true);
+    await vi.waitFor(() => expect(text('prepare-status')).toContain('taking too long'));
+    expect(text('prepare-status')).toContain('reload the page');
+    await vi.waitFor(() =>
+      expect(document.getElementById('prepare')).toHaveProperty('disabled', false),
+    );
+    finish(); // the abandoned call settles late
+    await settle();
+    expect(text('prepare-status')).toContain('taking too long');
+    click();
+    expect(calls).toBe(2);
+  });
+
+  it('does not time out while progress keeps arriving (R4.7)', async () => {
+    let report!: (f: number) => void;
+    let finish!: () => void;
+    const shell = initGateShell(
+      makeDeps({
+        prepareStallMs: 40,
+        prepare: (onProgress) => {
+          report = onProgress;
+          return new Promise<void>((r) => (finish = r));
+        },
+      }),
+    );
+    shell.start();
+    await vi.waitFor(() =>
+      expect(document.getElementById('prepare')).toHaveProperty('disabled', false),
+    );
+    click();
+    for (let i = 1; i <= 5; i++) {
+      await new Promise((r) => setTimeout(r, 15));
+      report(i / 10);
+    }
+    expect(text('prepare-status')).not.toContain('taking too long');
+    finish();
+    await vi.waitFor(() => expect(text('prepare-status')).toBe('Gemini Nano is downloaded.'));
+  });
+
   it('shows the error and re-probes when preparation fails', async () => {
     const probe = vi.fn<ShellDeps['probe']>(async () => ({
       languageModelExists: true,

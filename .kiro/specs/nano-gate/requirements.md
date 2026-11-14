@@ -12,7 +12,7 @@ response's `inferenceSource`.
 
 - R1.1 The build shall emit `gate.html` as a second Vite rollup input in addition to `index.html`.
 - R1.2 The main page footer shall link to `gate.html`.
-- R1.3 The gate page shall use a dark theme with teal `#2DD4BF` for on-device and violet `#A78BFA` for cloud, and use them for nothing else. A button shall be teal or violet only when the route it starts is on-device or cloud respectively; a button whose route is not yet decided shall be neutral.
+- R1.3 The gate page shall use a dark theme with teal `#2DD4BF` for on-device and violet `#A78BFA` for cloud, and use them for nothing else (no decorative use, including backgrounds and gradients). A button shall be teal or violet only when the route it starts is on-device or cloud respectively; a button whose route is not yet decided shall be neutral.
 - R1.4 The gate page shall present results in large type that is readable at 1920x1080.
 - R1.5 While the user prefers reduced motion, the page shall not animate (progress, stamps, transitions).
 - R1.6 When a result, status or progress value changes, the page shall announce it through an `aria-live` region that stays in the DOM and is updated in place (never replaced by a new node), and every control shall have an accessible label.
@@ -33,7 +33,7 @@ response's `inferenceSource`.
 - R2.11 When everything needed is fine, the panel shall say that no fixes are needed. It shall not say so while availability is `unknown` (the probe failed), and before the first probe has finished it shall say that it is checking instead of listing device fixes.
 - R2.12 If Firebase config is present but initialization throws, then the panel shall show the "Firebase failed to initialize" fix with the error text, shall not show the "not configured" fix, and the cloud shall be unusable (the page runs on the placeholder app). The environment state shall distinguish "config present" from "cloud usable".
 - R2.13 While App Check is still being checked, the routing reason shall say it is still checking, not that reCAPTCHA failed to load.
-- R2.14 If App Check was `stuck` and the browser fires `online`, then the page shall check App Check again.
+- R2.14 If the browser fires `online` while App Check is `stuck`, or fires `online` during an App Check wait that then ends `stuck`, then the page shall check App Check again.
 - R2.15 If availability is `unknown` with `LanguageModel` present, then the panel shall say that the probe failed and suggest reloading.
 
 ## R3 On-device test without a Firebase project
@@ -47,7 +47,7 @@ response's `inferenceSource`.
 
 ## R4 Prepare Nano
 
-- R4.1 When the user presses "Prepare Nano", the page shall call `initializeDeviceModel` (through `prepareOnDevice`) inside that click.
+- R4.1 When the user presses "Prepare Nano", the page shall call `initializeDeviceModel` (through `prepareGradeDevice`, so the download is tracked on the grade model's adapter) inside that click.
 - R4.2 While the model downloads, the page shall show a progress bar with the percentage, and expose it as `role="progressbar"` with `aria-valuenow`.
 - R4.3 When preparation finishes, the page shall re-probe availability and update the environment panel.
 - R4.5 While the model downloads, the polite status text shall change at most once per 10% step, so screen readers are not flooded; the progress bar itself still updates on every event.
@@ -77,6 +77,9 @@ response's `inferenceSource`.
 - R6.6 If the plan is blocked, then the page shall show the blocked reason and shall not call the SDK.
 - R6.7 If the student answer is empty, then the page shall ask for an answer and shall not call the SDK.
 - R6.8 If grading fails (including a timeout), then the page shall show a readable error that fits the gate page (no advice about switching modes on the main page) and re-enable the Grade button. A malformed model reply shall be reported as such, not as "Something went wrong".
+- R6.9 While a batch go/no-go run or another grade is in flight, the Grade button shall be disabled and no second call shall start. Grade and Run share one inference lock, because a second on-device session on the same adapter destroys the first call's session.
+- R6.10 If a grade is blocked or fails, then focus shall move to the result, as on success.
+- R6.11 The answer field shall carry `maxlength` equal to the grading limit (1200 characters) and a visible hint, so no text is cut silently.
 
 ## R7 Batch go/no-go
 
@@ -93,6 +96,8 @@ response's `inferenceSource`.
 - R7.11 If any call times out (R5.10), then the page shall stop the batch, show INCONCLUSIVE with the timeout, and re-enable "Run go/no-go".
 - R7.12 When the batch stops before grading (blocked plan, failed warm-up, timeout), the page shall not leave "waiting…" rows for items that never ran. After every run the progress bar shall be hidden.
 - R7.13 Every INCONCLUSIVE outcome shall move focus to the verdict, as GO and NO-GO do.
+- R7.14 While a batch is running or a single grade is in flight, "Run go/no-go" shall be disabled (see R6.9).
+- R7.15 The copied report's environment shall include the App Check status and shall say "present, init failed" (with the error) when config is present but initialization threw, not "not configured".
 
 ## R8 Routing
 

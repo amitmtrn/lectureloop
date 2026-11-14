@@ -32,7 +32,12 @@ Read from `node_modules/@firebase/ai` 3.0.0 (the version `firebase` 13.2.0 pins)
 | `src/gate-data.ts`                                            | sample card, labelled 12-answer set                                                | data         |
 | `src/gate-env.ts`                                             | Chrome version parsing, `environmentFixes`, `probeEnvironment` (R2)                | pure + probe |
 | `src/gate-firebase.ts`                                        | `initGateFirebase`: configured vs local placeholder (R3)                           | no           |
-| `src/gate.ts`, `src/gate-dom.ts`, `src/gate.css`, `gate.html` | page (R1, R4, R6, R7)                                                              | no           |
+| `src/gate.ts`, `src/gate-dom.ts`, `src/gate.css`, `gate.html` | page wiring, DOM helpers, styles, markup (R1, R4, R6, R7)                          | no           |
+| `src/gate-shell.ts`                                           | `initGateShell(deps)`: environment panel, Prepare Nano, App Check wait (R2, R4)    | injectable   |
+| `src/gate-ctx.ts`                                             | `GateCtx` shared by the sections, `createInferenceLock` (R6.9)                     | yes          |
+| `src/gate-single.ts`                                          | single grade section (R6)                                                          | no           |
+| `src/gate-batch.ts`                                           | batch go/no-go section and report (R7)                                             | no           |
+| `src/gate-errors.ts`                                          | gate-specific friendly error text (R6.8)                                           | yes          |
 
 ### Routing
 
@@ -125,3 +130,12 @@ placeholder app in `ONLY_ON_DEVICE`: the fake session is prompted and `fetch` is
 - **Grade button.** Neutral until the plan resolves; teal for an on-device plan, violet for cloud. The fixes list is a plain `<ul>` inside a `role="status"` wrapper.
 - **Parser and prompt.** Confidence must be a JSON number. Runs of `"""` are removed from the student answer. The on-device schema has no `minimum`/`maximum`.
 - **Timeout.** `withTimeout(promise, ms)` rejects with `GradeTimeoutError`. `gradeAnswer` takes `timeoutMs` (default 60 000); the batch passes 180 000 for the warm-up. The underlying SDK call cannot be aborted, so a late reply is ignored. A timeout in the batch stops it.
+
+## Review fixes 2
+
+- **One inference at a time.** `GateCtx.inference` is an `InferenceLock` (`tryAcquire`, `busy`, `onChange`) created by the shell. Grade and Run take it for the whole call or batch and release it in `finally`; each disables its button on `onChange`. The SDK's `createSession()` destroys the previous session on an adapter, so overlapping calls would abort each other (a failed row counts as disagreement) and inflate the warm median.
+- **Colour.** The page background uses a neutral tint; teal and violet appear only for on-device and cloud.
+- **App Check retry.** The shell remembers an `online` event that arrives during a wait. When the wait ends `stuck`, it checks again once per such event.
+- **Report.** `environmentRecord` writes `Firebase config` as `present`, `present, init failed: <error>` or `not configured`, and adds `App Check`.
+- **Failure focus.** `showBlocked` focuses the result, as the success path does; the result is un-hidden first.
+- **Answer length.** The textarea has `maxlength=1200` (same value as `MAX_STUDENT_CHARS`, now exported) and a hint line.

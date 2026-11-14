@@ -18,3 +18,13 @@ Review fixes (code review of T1-T9):
 - [x] T13 Single grade: gate-specific friendly errors, route-coloured Grade button, list semantics for fixes, tests for `gate-single`. (R1.3, R1.6, R6.4-R6.8)
 - [x] T14 Grade core: strict numeric confidence, strip `"""` from the answer, drop `minimum`/`maximum` from the on-device schema. (R5.1, R5.3, R5.5)
 - [x] T15 Per-call timeout with a clear error; Grade and Run recover; batch stops on timeout. (R5.10, R6.8, R7.11)
+
+Review fixes 2 (second review):
+
+- [ ] T16 One inference at a time: shared `InferenceLock` on `GateCtx`; Grade disabled during a batch, Run disabled during a grade. (R6.9, R7.14)
+- [ ] T17 Neutral page background; no teal or violet outside routing. (R1.3)
+- [ ] T18 App Check retry when `online` fires during the wait and it ends `stuck`. (R2.14)
+- [ ] T19 Report: "present, init failed" and the App Check status. (R7.15)
+- [ ] T20 Spec drift: R4.1 wording and the module table. (R4.1)
+- [ ] T21 Focus the result when a grade is blocked or fails. (R6.10)
+- [ ] T22 `maxlength` and hint on the answer field. (R6.11)

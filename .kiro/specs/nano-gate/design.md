@@ -1,0 +1,107 @@
+# nano-gate: design
+
+## SDK verification (R3.6)
+
+Read from `node_modules/@firebase/ai` 3.0.0 (the version `firebase` 13.2.0 pins), `dist/esm/index.esm.js`:
+
+- `chromeAdapterFactory` returns an adapter only if `globalThis.LanguageModel` exists. Without it
+  `chromeAdapter` is undefined and `callCloudOrDevice` sends every mode, including `ONLY_ON_DEVICE`,
+  to the cloud. This is why `hasOnDeviceAdapter` is checked before every on-device call.
+- With an adapter in `ONLY_ON_DEVICE`, `callCloudOrDevice` runs `chromeAdapter.isAvailable()` and then
+  only `chromeAdapter.generateContent()`, which calls `LanguageModel.create()` and `session.prompt()`.
+  If the model is unavailable it throws `AIError`; it never calls the in-cloud function.
+- `fetch(` appears twice in the package. One is the cloud `makeRequest` (not reached in this mode). The
+  other turns an image part into bytes from a `data:` URL, which is local, and text-only prompts never reach it.
+- `getGenerativeModel` builds `GenerativeModel`, whose constructor calls `initApiSettings`. That only
+  needs `apiKey`, `projectId` and `appId` to be present (it throws otherwise) and makes no request.
+  App Check is optional (`getImmediate({optional: true})`), so a placeholder app without App Check is valid.
+- Conclusion: `ONLY_ON_DEVICE` with the Chrome adapter makes no network request from the SDK. Chrome itself may
+  download the model on `create()` (that is the Prepare step). The test `gate-firebase.test.ts` checks that
+  `fetch` is never called with the placeholder app.
+- The SDK has no on-device temperature option (`LanguageModelCreateOptions` has none), so "low
+  temperature" applies to the cloud (`generationConfig.temperature = 0.1`). Nano runs at Chrome's default.
+  The JSON Schema `responseConstraint` is what keeps its output well-formed.
+
+## Modules
+
+| File | Role | Pure |
+| --- | --- | --- |
+| `src/routing.ts` | `planRoute`, `classifyPath` (R8) | yes |
+| `src/grade.ts` | prompt, schemas, `parseVerdict`, `runGrade`, `gradeAnswer`, grade model cache (R5) | mostly |
+| `src/gate-summary.ts` | `GO_THRESHOLDS`, `median`, `summarizeBatch`, `toMarkdown`/`toJson` (R7) | yes |
+| `src/gate-data.ts` | sample card, labelled 12-answer set | data |
+| `src/gate-env.ts` | Chrome version parsing, `environmentFixes`, `probeEnvironment` (R2) | pure + probe |
+| `src/gate-firebase.ts` | `initGateFirebase`: configured vs local placeholder (R3) | no |
+| `src/gate.ts`, `src/gate-dom.ts`, `src/gate.css`, `gate.html` | page (R1, R4, R6, R7) | no |
+
+### Routing
+
+```
+deviceReady = adapterAttached && deviceAvailability === 'available'
+cloudReady  = cloudConfigured && online && appCheckResponsive
+```
+
+| choice | deviceReady | cloudReady | mode | expectedPath |
+| --- | --- | --- | --- | --- |
+| auto | yes | yes | PREFER_ON_DEVICE | on_device |
+| auto | yes | no | ONLY_ON_DEVICE | on_device |
+| auto | no | yes | ONLY_IN_CLOUD | in_cloud |
+| auto | no | no | null | none |
+| device | yes | any | ONLY_ON_DEVICE | on_device |
+| device | no | any | null | none |
+| cloud | any | yes | ONLY_IN_CLOUD | in_cloud |
+| cloud | any | no | null | none |
+
+The `reason` string names the blocker in plain English (offline, not configured, App Check not
+responding, API missing, not downloaded yet, adapter missing). `classifyPath(expected, source)` maps
+`'on_device'|'in_cloud'` to itself and anything else (including undefined) to `unknown`; mismatch is
+`actual !== expected` (for expected `none` any run is a mismatch). `unknown` is never turned into a guess.
+
+### Grading
+
+`GradeInput -> buildGradePrompt -> generate(prompt) -> parseVerdict`. The injectable
+`GradeGenerateFn` returns `{text, source}` where `source` may be undefined. `runGrade` times the whole
+call with an injected clock, retries once on `GradeParseError`, and returns
+`{verdict, source, latencyMs, attempts}`. `gradeAnswer(ai, mode, input, {allowCloud})` wires a
+cached `GenerativeModel` (per AI and mode) built with `inCloudParams` (responseSchema, temperature 0.1) and
+`onDeviceParams` (text-only English `createOptions`, `responseConstraint`). It refuses any mode other than
+`ONLY_ON_DEVICE` when `allowCloud` is false (placeholder app), checks the adapter, and rejects an
+`ONLY_ON_DEVICE` response whose source is not `on_device`.
+
+`parseVerdict` tries the fenced block, then the raw text, and each `{` in turn (same strategy as
+`parseStudyPack`, built on `stripCodeFences` and `extractFirstJsonObject`).
+
+### Go/no-go maths
+
+Item: `{expected, got|null, latencyMs|null, path: on_device|in_cloud|unknown|failed}`.
+`ranOnDevice` = items with path `on_device` and a verdict.
+
+- `warmMedianMs` = median of `latencyMs` of `ranOnDevice` items (even count: mean of the middle two); null if none.
+- `agreement` = items with `got === expected` / all items.
+- `wrongCaught` = clearly wrong items (expected `missed`) with `got` in `partial|missed` / clearly wrong items.
+- Verdict: INCONCLUSIVE if no item ran on-device, or any item is `in_cloud` or `unknown`.
+  Else GO if `warmMedianMs <= maxWarmMedianMs && agreement >= minAgreement && wrongCaught >= minWrongCaught`, else NO-GO.
+- Ratios compare with a 1e-9 tolerance so 7/10 passes a 0.7 threshold.
+- `GO_THRESHOLDS = {maxWarmMedianMs: 5000, minAgreement: 0.7, minWrongCaught: 0.9}`; `summarizeBatch(items, thresholds = GO_THRESHOLDS)`.
+
+### Gate Firebase bootstrap
+
+```
+readConfig missing -> initializeApp(LOCAL_PLACEHOLDER_OPTIONS, 'lectureloop-gate-local') + getAI
+                      => {kind: 'local', ai, missing}   (no App Check, allowCloud=false)
+firebaseStatus.ready -> {kind: 'configured', ai, appCheck} (allowCloud=true)
+firebaseStatus error -> same as local, with the error shown
+```
+`src/firebase.ts` is imported for `firebaseStatus` and is unchanged, so App Check stays initialized
+before any cloud call. Placeholder values are plainly fake (`local-placeholder-not-a-real-key`).
+
+### Page
+
+Sections: header with route legend, environment panel (device station teal, cloud station violet/grey, fixes list),
+Prepare Nano with progress bar, route selector + single grade, batch go/no-go. The route choice only
+affects the single grade; the batch always uses `ONLY_ON_DEVICE`. Before cloud routes, `appCheckResponds`
+(8 s first probe) feeds `appCheckResponsive`. Verdict hues: correct lime `#A3E635`, partial amber `#FBBF24`,
+missed rose `#FB7185`; GO lime, NO-GO rose, INCONCLUSIVE amber. Motion is declared only inside
+`@media (prefers-reduced-motion: no-preference)`.
+
+Privacy: the report contains only the built-in labelled set. Copy uses `navigator.clipboard`; nothing is stored.

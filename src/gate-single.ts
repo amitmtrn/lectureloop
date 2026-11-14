@@ -1,7 +1,7 @@
 import { InferenceMode } from 'firebase/ai';
-import { toFriendlyError } from './errors';
 import { $, el, pathBadge, verdictStamp, type PathLabel } from './gate-dom';
 import type { GateCtx } from './gate-ctx';
+import { gateFriendlyError } from './gate-errors';
 import { allowsCloud } from './gate-firebase';
 import { SAMPLE_ANSWER, SAMPLE_CARD } from './gate-data';
 import { gradeAnswer, type GradeResult } from './grade';
@@ -38,6 +38,14 @@ export function initSingleGrade(ctx: GateCtx): void {
         ? el('span', 'chip chip-unknown', 'BLOCKED')
         : pathBadge(plan.expectedPath);
     els.plan.replaceChildren(badge, plan.reason);
+    // Teal and violet mean "runs on-device / in the cloud": colour the button only once that is known.
+    els.grade.className = `btn ${
+      plan.expectedPath === 'on_device'
+        ? 'btn-device'
+        : plan.expectedPath === 'in_cloud'
+          ? 'btn-cloud'
+          : 'btn-neutral'
+    }`;
   }
   ctx.onEnv(renderPlan);
   els.choices.addEventListener('change', renderPlan);
@@ -124,7 +132,7 @@ export function initSingleGrade(ctx: GateCtx): void {
       els.result.focus();
     } catch (err) {
       console.error('[LectureLoop] grade failed', err);
-      const friendly = toFriendlyError(err, plan.mode ?? InferenceMode.ONLY_ON_DEVICE);
+      const friendly = gateFriendlyError(err, plan.mode ?? InferenceMode.ONLY_ON_DEVICE);
       showBlocked(`${friendly.title}. ${friendly.detail}`);
       els.status.textContent = 'Failed.';
     } finally {

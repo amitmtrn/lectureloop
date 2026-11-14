@@ -15,6 +15,6 @@ Review fixes (code review of T1-T9):
 - [x] T10 Environment state: separate "config present" from "cloud usable", show Firebase init errors, "checking" and "probe failed" states, App Check "still checking" reason. (R2.11-R2.13, R2.15)
 - [x] T11 Page shell `src/gate-shell.ts` (testable), re-probe while downloading, App Check retry on `online`, throttled progress announcements, shell and Prepare tests. (R2.6, R2.14, R4.2-R4.5)
 - [x] T12 Batch UI: update the verdict live region in place, focus on every INCONCLUSIVE, no stale "waiting…" rows, hide progress after a run. (R1.6, R7.12, R7.13)
-- [ ] T13 Single grade: gate-specific friendly errors, route-coloured Grade button, list semantics for fixes, tests for `gate-single`. (R1.3, R1.6, R6.4-R6.8)
+- [x] T13 Single grade: gate-specific friendly errors, route-coloured Grade button, list semantics for fixes, tests for `gate-single`. (R1.3, R1.6, R6.4-R6.8)
 - [ ] T14 Grade core: strict numeric confidence, strip `"""` from the answer, drop `minimum`/`maximum` from the on-device schema. (R5.1, R5.3, R5.5)
 - [ ] T15 Per-call timeout with a clear error; Grade and Run recover; batch stops on timeout. (R5.10, R6.8, R7.11)

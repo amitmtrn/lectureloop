@@ -1,8 +1,8 @@
-import { toFriendlyError } from './errors';
 import type { GateCtx } from './gate-ctx';
 import { LABELLED_SET, toGradeInput } from './gate-data';
 import { $, el, pathBadge, type PathLabel } from './gate-dom';
 import { describeAvailability, describeBrowser } from './gate-env';
+import { gateFriendlyError } from './gate-errors';
 import { allowsCloud } from './gate-firebase';
 import {
   GO_THRESHOLDS,
@@ -163,7 +163,7 @@ export function initBatch(ctx: GateCtx): void {
         cold = warm.latencyMs;
       } catch (err) {
         console.error('[LectureLoop] warm-up failed', err);
-        const f = toFriendlyError(err, mode);
+        const f = gateFriendlyError(err, mode);
         inconclusive(`Warm-up failed, so Nano did not run. ${f.title}. ${f.detail}`);
         return;
       }

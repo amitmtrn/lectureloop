@@ -25,6 +25,6 @@ Review fixes 2 (second review):
 - [x] T17 Neutral page background; no teal or violet outside routing. (R1.3)
 - [x] T18 App Check retry when `online` fires during the wait and it ends `stuck`. (R2.14)
 - [x] T19 Report: "present, init failed" and the App Check status. (R7.15)
-- [ ] T20 Spec drift: R4.1 wording and the module table. (R4.1)
+- [x] T20 Spec drift: R4.1 wording and the module table. (R4.1)
 - [ ] T21 Focus the result when a grade is blocked or fails. (R6.10)
 - [ ] T22 `maxlength` and hint on the answer field. (R6.11)

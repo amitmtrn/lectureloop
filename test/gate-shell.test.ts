@@ -71,6 +71,17 @@ describe('environment panel', () => {
     expect(text('fixes')).not.toContain('Nothing to fix');
   });
 
+  it('says "Nothing to fix" with the cloud hint on a separate line when only Firebase is missing', async () => {
+    const shell = initGateShell(makeDeps());
+    shell.start();
+    await vi.waitFor(() => expect(text('fixes')).toContain('Nothing to fix'));
+    const items = [...document.querySelectorAll('#fixes li')];
+    expect(items).toHaveLength(2);
+    expect(items[0]?.textContent).toContain('Nothing to fix');
+    expect(items[1]?.className).toBe('fix-info');
+    expect(items[1]?.textContent).toContain('Cloud is not configured');
+  });
+
   it('shows the Firebase init error, not the "not configured" hint', async () => {
     const shell = initGateShell(
       makeDeps({ fb: { kind: 'local', ai: {} as AI, missing: [], error: 'bad api key' } }),

@@ -99,6 +99,15 @@ export interface Fix {
 export const REQUIREMENTS_TEXT =
   'Needs about 22 GB free disk, and 16 GB RAM with 4 or more CPU cores, or more than 4 GB of GPU VRAM. Check chrome://on-device-internals.';
 
+/**
+ * Informational line for a cloud that is simply not set up (no init error). Not a fix: the
+ * on-device path works without it.
+ */
+export function cloudHint(env: EnvSnapshot): string | null {
+  if (env.configured || env.initError !== undefined || env.appCheck === 'error') return null;
+  return `Cloud is not configured${env.missingConfig.length ? ` (missing ${env.missingConfig.join(', ')})` : ''}. On-device still works. See docs/SETUP-FIREBASE.md to enable the cloud.`;
+}
+
 /** The exact fixes for whatever is missing. Empty when nothing needs fixing for the device path. */
 export function environmentFixes(env: EnvSnapshot): Fix[] {
   const fixes: Fix[] = [];
@@ -171,12 +180,7 @@ export function environmentFixes(env: EnvSnapshot): Fix[] {
       id: 'appcheck-init',
       text: `Firebase failed to initialize${env.initError ? `: ${env.initError}` : ''}. Check the VITE_* values and the browser console. The cloud is disabled; on-device still works.`,
     });
-  } else if (!env.configured) {
-    fixes.push({
-      id: 'config',
-      text: `Cloud is not configured${env.missingConfig.length ? ` (missing ${env.missingConfig.join(', ')})` : ''}. On-device still works. See docs/SETUP-FIREBASE.md to enable the cloud.`,
-    });
-  } else if (env.appCheck === 'stuck') {
+  } else if (env.configured && env.appCheck === 'stuck') {
     fixes.push({
       id: 'appcheck',
       text: 'App Check did not answer: the reCAPTCHA script did not load. Check ad blockers and network filters. Cloud calls are disabled.',

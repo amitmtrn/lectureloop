@@ -4,6 +4,7 @@ import {
   describeAvailability,
   describeFirebaseConfig,
   describeBrowser,
+  cloudHint,
   environmentFixes,
   parseBrowser,
   type EnvSnapshot,
@@ -117,14 +118,18 @@ describe('environmentFixes', () => {
 
   it('explains offline, missing config and stuck App Check', () => {
     expect(ids({ online: false })).toEqual(['offline']);
-    const cfg = environmentFixes({
+    const unconfigured: EnvSnapshot = {
       ...good,
       configured: false,
       missingConfig: ['VITE_FIREBASE_API_KEY'],
       appCheck: 'not-configured',
-    });
-    expect(cfg[0]?.text).toContain('VITE_FIREBASE_API_KEY');
-    expect(cfg[0]?.text).toContain('docs/SETUP-FIREBASE.md');
+    };
+    expect(environmentFixes(unconfigured)).toEqual([]);
+    const hint = cloudHint(unconfigured) ?? '';
+    expect(hint).toContain('VITE_FIREBASE_API_KEY');
+    expect(hint).toContain('docs/SETUP-FIREBASE.md');
+    expect(cloudHint(good)).toBeNull();
+    expect(cloudHint({ ...unconfigured, initError: 'x', appCheck: 'error' })).toBeNull();
     expect(ids({ appCheck: 'stuck' })).toEqual(['appcheck']);
   });
 

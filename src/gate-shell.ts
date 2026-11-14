@@ -2,6 +2,7 @@ import type { AppCheck } from 'firebase/app-check';
 import {
   describeAvailability,
   describeBrowser,
+  cloudHint,
   environmentFixes,
   MIN_CHROME_MAJOR,
   type AppCheckState,
@@ -134,13 +135,17 @@ export function initGateShell(deps: ShellDeps): Shell {
     els.stationCloud.classList.toggle('is-off', !env.configured);
 
     const fixes = environmentFixes(env);
+    const hint = cloudHint(env);
     setChildren(
       els.fixes,
       !env.probed
         ? [el('li', undefined, 'Checking this machine…')]
-        : fixes.length === 0
-          ? [el('li', 'fix-ok', 'Nothing to fix. Nano is ready for the test below.')]
-          : fixes.map((f) => el('li', undefined, f.text)),
+        : [
+            ...(fixes.length === 0
+              ? [el('li', 'fix-ok', 'Nothing to fix. Nano is ready for the test below.')]
+              : fixes.map((f) => el('li', undefined, f.text))),
+            ...(hint ? [el('li', 'fix-info', hint)] : []),
+          ],
     );
 
     els.prepare.disabled = !env.languageModelExists || !env.adapterAttached || preparing;

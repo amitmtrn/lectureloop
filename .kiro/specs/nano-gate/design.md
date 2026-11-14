@@ -24,20 +24,20 @@ Read from `node_modules/@firebase/ai` 3.0.0 (the version `firebase` 13.2.0 pins)
 
 ## Modules
 
-| File                                                          | Role                                                                                 | Pure         |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------ |
-| `src/routing.ts`                                              | `planRoute`, `classifyPath` (R8)                                                     | yes          |
-| `src/grade.ts`                                                | prompt, schemas, `parseVerdict`, `runGrade`, `gradeAnswer`, grade model cache (R5)   | mostly       |
-| `src/gate-summary.ts`                                         | `GO_THRESHOLDS`, `median`, `summarizeBatch`, `toMarkdown`/`toJson` (R7)              | yes          |
-| `src/gate-data.ts`                                            | sample card, labelled 12-answer set                                                  | data         |
-| `src/gate-env.ts`                                             | Chrome version parsing, `environmentFixes`, `probeAvailability`, `probeBrowser` (R2) | pure + probe |
-| `src/gate-firebase.ts`                                        | `initGateFirebase`: configured vs local placeholder (R3)                             | no           |
-| `src/gate.ts`, `src/gate-dom.ts`, `src/gate.css`, `gate.html` | page wiring, DOM helpers, styles, markup (R1, R4, R6, R7)                            | no           |
-| `src/gate-shell.ts`                                           | `initGateShell(deps)`: environment panel, Prepare Nano, App Check wait (R2, R4)      | injectable   |
-| `src/gate-ctx.ts`                                             | `GateCtx` shared by the sections, `createInferenceLock` (R6.9)                       | yes          |
-| `src/gate-single.ts`                                          | single grade section (R6)                                                            | no           |
-| `src/gate-batch.ts`                                           | batch go/no-go section and report (R7)                                               | no           |
-| `src/gate-errors.ts`                                          | gate-specific friendly error text (R6.8)                                             | yes          |
+| File                                                          | Role                                                                                              | Pure         |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------ |
+| `src/routing.ts`                                              | `planRoute`, `classifyPath` (R8)                                                                  | yes          |
+| `src/grade.ts`                                                | prompt, schemas, `parseVerdict`, `runGrade`, `gradeAnswer`, grade model cache (R5)                | mostly       |
+| `src/gate-summary.ts`                                         | `GO_THRESHOLDS`, `median`, `summarizeBatch`, `toMarkdown`/`toJson` (R7)                           | yes          |
+| `src/gate-data.ts`                                            | sample card, labelled 12-answer set                                                               | data         |
+| `src/gate-env.ts`                                             | Chrome version parsing, `environmentFixes`, `cloudHint`, `probeAvailability`, `probeBrowser` (R2) | pure + probe |
+| `src/gate-firebase.ts`                                        | `initGateFirebase`: configured vs local placeholder (R3)                                          | no           |
+| `src/gate.ts`, `src/gate-dom.ts`, `src/gate.css`, `gate.html` | page wiring, DOM helpers, styles, markup (R1, R4, R6, R7)                                         | no           |
+| `src/gate-shell.ts`                                           | `initGateShell(deps)`: environment panel, Prepare Nano, App Check wait (R2, R4)                   | injectable   |
+| `src/gate-ctx.ts`                                             | `GateCtx` shared by the sections, `createInferenceLock` (R6.9)                                    | yes          |
+| `src/gate-single.ts`                                          | single grade section (R6)                                                                         | no           |
+| `src/gate-batch.ts`                                           | batch go/no-go section and report (R7)                                                            | no           |
+| `src/gate-errors.ts`                                          | gate-specific friendly error text (R6.8)                                                          | yes          |
 
 ### Routing
 
@@ -122,7 +122,7 @@ placeholder app in `ONLY_ON_DEVICE`: the fake session is prompted and `fetch` is
 
 ## Review fixes
 
-- **Env state.** `EnvSnapshot.configured` now means "cloud usable" (real Firebase app was built). New fields: `initError?: string` (config present, `initializeApp`/App Check threw; the page runs on the placeholder app) and `probed: boolean` (first availability probe finished). `environmentFixes` shows `appcheck-init` with the error text when `initError` is set and skips the `config` fix then. Before the first probe the panel shows "Checking this machine…" and no device fixes. `unknown` availability with `LanguageModel` present gives a `probe-failed` fix, so "Nothing to fix" never shows then.
+- **Env state.** `EnvSnapshot.configured` now means "cloud usable" (real Firebase app was built). New fields: `initError?: string` (config present, `initializeApp`/App Check threw; the page runs on the placeholder app) and `probed: boolean` (first availability probe finished). `environmentFixes` shows `appcheck-init` with the error text when `initError` is set and `cloudHint` returns null then (see Review fixes 5). Before the first probe the panel shows "Checking this machine…" and no device fixes. `unknown` availability with `LanguageModel` present gives a `probe-failed` fix, so "Nothing to fix" never shows then.
 - **Routing reason.** `RouteInput.appCheckChecking?: boolean` makes `cloudBlocker` say "App Check is still being checked" instead of "not responding".
 - **Shell.** The page shell moves from `gate.ts` to `gate-shell.ts` as `initGateShell(deps)` with injectable probe, adapter check, prepare, App Check check and timings, so jsdom tests can drive it. `gate.ts` only wires real dependencies. While availability is `downloading` (and no Prepare is running) the shell re-probes every `pollMs` (3 s). An `online` event re-runs the App Check wait if the state is `stuck`. Prepare status text changes once per 10% bucket.
 - **Live regions.** `setChildren` (`gate-dom.ts`) skips the update when the rendered markup is identical; `#fixes` and `#plan` use it.

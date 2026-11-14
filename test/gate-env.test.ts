@@ -19,6 +19,7 @@ const good: EnvSnapshot = {
   configured: true,
   missingConfig: [],
   appCheck: 'responding',
+  probed: true,
 };
 const ids = (over: Partial<EnvSnapshot>) => environmentFixes({ ...good, ...over }).map((f) => f.id);
 
@@ -117,6 +118,34 @@ describe('environmentFixes', () => {
     expect(cfg[0]?.text).toContain('VITE_FIREBASE_API_KEY');
     expect(cfg[0]?.text).toContain('docs/SETUP-FIREBASE.md');
     expect(ids({ appCheck: 'stuck' })).toEqual(['appcheck']);
-    expect(ids({ appCheck: 'error' })).toEqual(['appcheck-init']);
+  });
+
+  it('shows the Firebase init error in the state the page really produces', () => {
+    // Config present, init threw: the page falls back to the placeholder app, so configured is false.
+    const fixes = environmentFixes({
+      ...good,
+      configured: false,
+      missingConfig: [],
+      initError: 'Firebase: Error (auth/invalid-api-key).',
+      appCheck: 'error',
+    });
+    expect(fixes.map((f) => f.id)).toEqual(['appcheck-init']);
+    expect(fixes[0]?.text).toContain('auth/invalid-api-key');
+    expect(fixes[0]?.text).not.toContain('SETUP-FIREBASE');
+  });
+
+  it('does not list device fixes before the first probe', () => {
+    expect(
+      ids({
+        probed: false,
+        languageModelExists: false,
+        availability: 'unknown',
+        adapterAttached: false,
+      }),
+    ).toEqual([]);
+  });
+
+  it('never reports "nothing to fix" when availability is unknown', () => {
+    expect(ids({ availability: 'unknown' })).toEqual(['probe-failed']);
   });
 });

@@ -32,7 +32,9 @@ let env: EnvSnapshot = {
   online: navigator.onLine,
   configured,
   missingConfig: fb.kind === 'local' ? fb.missing : [],
+  ...(fb.kind === 'local' && fb.error ? { initError: fb.error } : {}),
   appCheck: configured ? 'checking' : fb.kind === 'local' && fb.error ? 'error' : 'not-configured',
+  probed: false,
 };
 
 /** Everything the routing function needs, from the current environment. */
@@ -44,6 +46,7 @@ function currentRouteInput(userChoice: RouteInput['userChoice']): RouteInput {
     online: env.online,
     cloudConfigured: env.configured,
     appCheckResponsive: env.appCheck === 'responding',
+    appCheckChecking: env.appCheck === 'checking',
   };
 }
 
@@ -103,8 +106,8 @@ function renderEnv(): void {
     statusRow('Network', env.online ? 'online' : 'offline', env.online ? 'ok' : 'warn'),
     statusRow(
       'Firebase config',
-      env.configured ? 'present' : 'not configured',
-      env.configured ? 'ok' : 'off',
+      env.configured ? 'present' : env.initError ? 'present, init failed' : 'not configured',
+      env.configured ? 'ok' : env.initError ? 'bad' : 'off',
     ),
     statusRow('App Check', acText, acTone),
   );
@@ -112,9 +115,11 @@ function renderEnv(): void {
 
   const fixes = environmentFixes(env);
   els.fixes.replaceChildren(
-    ...(fixes.length === 0
-      ? [el('li', 'fix-ok', 'Nothing to fix. Nano is ready for the test below.')]
-      : fixes.map((f) => el('li', undefined, f.text))),
+    ...(!env.probed
+      ? [el('li', undefined, 'Checking this machine…')]
+      : fixes.length === 0
+        ? [el('li', 'fix-ok', 'Nothing to fix. Nano is ready for the test below.')]
+        : fixes.map((f) => el('li', undefined, f.text))),
   );
 
   els.prepare.disabled = !env.languageModelExists || !env.adapterAttached || preparing;
@@ -129,7 +134,7 @@ export async function refreshAvailability(): Promise<void> {
   } catch (err) {
     console.warn('[LectureLoop] could not build the on-device model', err);
   }
-  env = { ...env, ...probe, adapterAttached };
+  env = { ...env, ...probe, adapterAttached, probed: true };
   renderEnv();
 }
 

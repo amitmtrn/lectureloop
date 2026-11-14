@@ -13,6 +13,8 @@ export interface RouteInput {
   online: boolean;
   cloudConfigured: boolean;
   appCheckResponsive: boolean;
+  /** App Check has not answered yet but the wait is not over. */
+  appCheckChecking?: boolean;
 }
 
 export interface RoutePlan {
@@ -43,6 +45,9 @@ function deviceBlocker(input: RouteInput): string | null {
 function cloudBlocker(input: RouteInput): string | null {
   if (!input.cloudConfigured) return 'Firebase is not configured';
   if (!input.online) return 'the browser is offline';
+  if (!input.appCheckResponsive && input.appCheckChecking) {
+    return 'App Check is still being checked (try again in a few seconds)';
+  }
   if (!input.appCheckResponsive) return 'App Check is not responding (reCAPTCHA did not load)';
   return null;
 }

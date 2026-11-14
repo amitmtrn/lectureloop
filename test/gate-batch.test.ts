@@ -25,6 +25,7 @@ const env: EnvSnapshot = {
   configured: false,
   missingConfig: [],
   appCheck: 'not-configured',
+  probed: true,
 };
 
 function makeCtx(over: Partial<EnvSnapshot> = {}): GateCtx {

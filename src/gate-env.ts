@@ -16,9 +16,14 @@ export interface EnvSnapshot {
   availability: DeviceAvailability;
   adapterAttached: boolean;
   online: boolean;
+  /** The cloud is usable: config present and the real Firebase app (with App Check) was built. */
   configured: boolean;
   missingConfig: string[];
+  /** Config is present but Firebase initialization threw; the page runs on the placeholder app. */
+  initError?: string;
   appCheck: AppCheckState;
+  /** The first availability probe has finished. */
+  probed: boolean;
 }
 
 export const MIN_CHROME_MAJOR = 139;
@@ -98,13 +103,20 @@ export function environmentFixes(env: EnvSnapshot): Fix[] {
     });
   }
 
-  if (!env.languageModelExists) {
+  if (!env.probed) {
+    // Device API state is not known yet; do not guess.
+  } else if (!env.languageModelExists) {
     fixes.push({
       id: 'flag',
       text: 'Enable chrome://flags/#prompt-api-for-gemini-nano-multimodal-input, then relaunch Chrome.',
     });
   } else {
-    if (env.availability === 'unavailable') {
+    if (env.availability === 'unknown') {
+      fixes.push({
+        id: 'probe-failed',
+        text: 'Could not read the Gemini Nano availability (LanguageModel.availability threw). Reload the page and check the browser console.',
+      });
+    } else if (env.availability === 'unavailable') {
       fixes.push({ id: 'hardware', text: `Gemini Nano is unavailable here. ${REQUIREMENTS_TEXT}` });
     } else if (env.availability === 'downloadable') {
       fixes.push({
@@ -131,7 +143,12 @@ export function environmentFixes(env: EnvSnapshot): Fix[] {
       text: 'You are offline. The cloud path is unavailable; the on-device path is unaffected.',
     });
   }
-  if (!env.configured) {
+  if (env.initError !== undefined || env.appCheck === 'error') {
+    fixes.push({
+      id: 'appcheck-init',
+      text: `Firebase failed to initialize${env.initError ? `: ${env.initError}` : ''}. Check the VITE_* values and the browser console. The cloud is disabled; on-device still works.`,
+    });
+  } else if (!env.configured) {
     fixes.push({
       id: 'config',
       text: `Cloud is not configured${env.missingConfig.length ? ` (missing ${env.missingConfig.join(', ')})` : ''}. On-device still works. See docs/SETUP-FIREBASE.md to enable the cloud.`,
@@ -140,11 +157,6 @@ export function environmentFixes(env: EnvSnapshot): Fix[] {
     fixes.push({
       id: 'appcheck',
       text: 'App Check did not answer: the reCAPTCHA script did not load. Check ad blockers and network filters. Cloud calls are disabled.',
-    });
-  } else if (env.appCheck === 'error') {
-    fixes.push({
-      id: 'appcheck-init',
-      text: 'Firebase failed to initialize. See the browser console.',
     });
   }
   return fixes;

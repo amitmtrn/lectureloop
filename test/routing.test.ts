@@ -122,3 +122,21 @@ describe('classifyPath', () => {
     expect(classifyPath('none', 'on_device').mismatch).toBe(true);
   });
 });
+
+describe('App Check still checking', () => {
+  it('says it is still checking, not that reCAPTCHA failed', () => {
+    const p = plan({
+      userChoice: 'cloud',
+      appCheckResponsive: false,
+      appCheckChecking: true,
+    });
+    expect(p.mode).toBeNull();
+    expect(p.reason).toMatch(/still being checked/);
+    expect(p.reason).not.toMatch(/reCAPTCHA/);
+  });
+
+  it('still blames reCAPTCHA once the wait is over', () => {
+    const p = plan({ userChoice: 'cloud', appCheckResponsive: false, appCheckChecking: false });
+    expect(p.reason).toMatch(/reCAPTCHA/);
+  });
+});

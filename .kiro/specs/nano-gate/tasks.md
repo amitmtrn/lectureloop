@@ -58,3 +58,7 @@ Review fixes 5 (fifth review, NITs):
 - [x] T41 `LATE_CALL_NOTE` says "previous model call". (R5.11)
 - [x] T42 Prepare failures use `gateFriendlyError`. (R4.4)
 - [x] T43 Lock comments no longer say "same adapter". (R6.9)
+
+Review fixes 6 (sixth review, NITs):
+
+- [x] T44 A row that failed for a non-parse error (`errorKind: 'call'`) makes the verdict INCONCLUSIVE, so infrastructure errors no longer read NO-GO. (R7.6, R7.8)

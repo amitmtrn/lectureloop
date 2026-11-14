@@ -314,6 +314,22 @@ describe('batch go/no-go UI', () => {
     expect((document.getElementById('batch-table') as HTMLElement).hidden).toBe(false);
   });
 
+  it('marks an off-device answer as a call failure and ends INCONCLUSIVE (R7.6)', async () => {
+    gradeAnswer
+      .mockResolvedValueOnce(grade('correct')) // warm-up
+      .mockResolvedValueOnce(grade('correct'))
+      .mockImplementation(async () => {
+        throw new Error('On-device was required but the response did not come from the device.');
+      });
+    initBatch(makeCtx());
+    click('run-batch');
+    await vi.waitFor(() =>
+      expect(document.getElementById('copy-json')).toHaveProperty('disabled', false),
+    );
+    expect(document.getElementById('verdict')?.textContent).toContain('INCONCLUSIVE');
+    expect(document.getElementById('verdict')?.textContent).toContain('the call itself failed');
+  });
+
   it('plan for a device-only run matches the routing module', () => {
     expect(planRoute(makeCtx().routeInput('device')).mode).toBe(InferenceMode.ONLY_ON_DEVICE);
   });

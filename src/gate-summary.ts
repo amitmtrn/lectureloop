@@ -29,6 +29,12 @@ export interface BatchItem {
   attempts?: number;
   path: BatchPath;
   error?: string;
+  /**
+   * Why a failed item failed. `parse`: the model answered but not in a readable format. `call`:
+   * the call itself failed (adapter missing, response not from the device, SDK or network error).
+   * Items without a kind count as `parse`.
+   */
+  errorKind?: 'parse' | 'call';
 }
 
 export interface Check {
@@ -74,6 +80,7 @@ export function summarizeBatch(
   const onDevice = items.filter((i) => i.path === 'on_device' && i.got !== null);
   const offDevice = items.filter((i) => i.path === 'in_cloud' || i.path === 'unknown');
   const failed = items.filter((i) => i.got === null).length;
+  const callFailed = items.filter((i) => i.got === null && i.errorKind === 'call').length;
 
   const latencies = onDevice.flatMap((i) => (i.latencyMs === null ? [] : [i.latencyMs]));
   const warmMedianMs = median(latencies);
@@ -116,6 +123,9 @@ export function summarizeBatch(
   } else if (offDevice.length > 0) {
     verdict = 'INCONCLUSIVE';
     explanation = `${offDevice.length} answer(s) did not run on-device, so the result does not measure Nano alone.`;
+  } else if (callFailed > 0) {
+    verdict = 'INCONCLUSIVE';
+    explanation = `${callFailed} answer(s) failed because the call itself failed (not a parse error), so the result may reflect the environment, not how well Nano grades.`;
   } else if (checks.every((c) => c.pass)) {
     if (failed > 0) {
       verdict = 'INCONCLUSIVE';

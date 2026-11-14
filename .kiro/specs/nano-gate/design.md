@@ -84,7 +84,7 @@ Item: `{expected, got|null, latencyMs|null, path: on_device|in_cloud|unknown|fai
 - `warmMedianMs` = median of `latencyMs` of `ranOnDevice` items (even count: mean of the middle two); null if none.
 - `agreement` = items with `got === expected` / all items.
 - `wrongCaught` = clearly wrong items (expected `missed`) with `got` in `partial|missed` / clearly wrong items.
-- Verdict: INCONCLUSIVE if no item ran on-device, or any item is `in_cloud` or `unknown`. If thresholds pass but any item failed, INCONCLUSIVE too (GO needs `ranOnDevice === total`). A failed item still counts against agreement and wrong-caught, so failures that sink a threshold stay NO-GO.
+- Verdict: INCONCLUSIVE if no item ran on-device, or any item is `in_cloud` or `unknown`. If thresholds pass but any item failed, INCONCLUSIVE too (GO needs `ranOnDevice === total`). A failed item still counts against agreement and wrong-caught, so parse failures that sink a threshold stay NO-GO. A failed item whose `errorKind` is `call` (anything but `GradeParseError`; `gradeAnswer` throws for an off-device or unreported source, so off-device answers reach the batch this way) makes the verdict INCONCLUSIVE, checked after the off-device branch and before the thresholds (T44).
 - `BatchItem.attempts` comes from `GradeResult.attempts`; `latencyMs` stays the total over attempts and the table and report show both.
   Else GO if `warmMedianMs <= maxWarmMedianMs && agreement >= minAgreement && wrongCaught >= minWrongCaught`, else NO-GO.
 - Ratios compare with a 1e-9 tolerance so 7/10 passes a 0.7 threshold.

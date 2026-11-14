@@ -20,7 +20,7 @@ import {
   type BatchSummary,
   type GateReport,
 } from './gate-summary';
-import { GradeTimeoutError, gradeAnswer, WARMUP_TIMEOUT_MS } from './grade';
+import { GradeParseError, GradeTimeoutError, gradeAnswer, WARMUP_TIMEOUT_MS } from './grade';
 import { classifyPath, planRoute } from './routing';
 
 const VERDICT_CLASS = {
@@ -237,6 +237,7 @@ export function initBatch(ctx: GateCtx): void {
             latencyMs: null,
             path: 'failed',
             error: err instanceof Error ? err.message : String(err),
+            errorKind: err instanceof GradeParseError ? 'parse' : 'call',
           };
         }
         items.push(item);

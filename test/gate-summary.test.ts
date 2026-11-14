@@ -125,6 +125,17 @@ describe('summarizeBatch', () => {
     expect(s.verdict).toBe('NO-GO');
   });
 
+  it('is INCONCLUSIVE, not NO-GO, when a row failed because the call failed (R7.6)', () => {
+    const call = { ...item('missed', null, null, 'failed'), errorKind: 'call' as const };
+    const s = summarizeBatch([...perfect(), call]);
+    expect(s.verdict).toBe('INCONCLUSIVE');
+    expect(s.explanation).toContain('the call itself failed');
+    // a parse failure on the same data still reads NO-GO
+    expect(summarizeBatch([...perfect(), { ...call, errorKind: 'parse' as const }]).verdict).toBe(
+      'NO-GO',
+    );
+  });
+
   it('is INCONCLUSIVE when nothing ran on-device', () => {
     expect(summarizeBatch([]).verdict).toBe('INCONCLUSIVE');
     const allFailed = Array.from({ length: 4 }, () => item('correct', null, null, 'failed'));

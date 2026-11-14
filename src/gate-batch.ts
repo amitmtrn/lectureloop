@@ -49,6 +49,7 @@ export function initBatch(ctx: GateCtx): void {
 
   function setProgress(done: number): void {
     els.progress.hidden = false;
+    els.progress.setAttribute('aria-valuemax', String(LABELLED_SET.length));
     els.progress.setAttribute('aria-valuenow', String(done));
     els.fill.style.width = `${(done / LABELLED_SET.length) * 100}%`;
   }

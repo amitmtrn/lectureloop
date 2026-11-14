@@ -1,1 +1,1 @@
-- **Vite config.** `build.rolldownOptions.input` replaces the deprecated `rollupOptions` alias (Vite 8).
+- **Links.** `index.html` links to `gate.html` and `gate.html` links to `./` (R1.7).

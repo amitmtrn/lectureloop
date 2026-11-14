@@ -16,6 +16,7 @@ response's `inferenceSource`.
 - R1.4 The gate page shall present results in large type that is readable at 1920x1080.
 - R1.5 While the user prefers reduced motion, the page shall not animate (progress, stamps, transitions).
 - R1.6 When a result, status or progress value changes, the page shall announce it through an `aria-live` region that stays in the DOM and is updated in place (never replaced by a new node), and every control shall have an accessible label.
+- R1.7 The links between the study-pack page and the gate page shall be relative, so the site works under a non-root `base`.
 - R1.7 The page shall never encode meaning by colour alone (every colour is paired with text).
 
 ## R2 Environment panel

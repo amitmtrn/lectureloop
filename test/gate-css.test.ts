@@ -9,3 +9,11 @@ describe('gate.css colour use (R1.3)', () => {
     expect(body).not.toMatch(/45 212 191|167 139 250|2dd4bf|a78bfa|var\(--(device|cloud)\)/i);
   });
 });
+
+describe('links work under a non-root base', () => {
+  it('uses relative links between the two pages', () => {
+    expect(readFileSync('index.html', 'utf8')).toContain('href="gate.html"');
+    expect(readFileSync('gate.html', 'utf8')).toContain('href="./"');
+    expect(readFileSync('index.html', 'utf8')).not.toContain('href="/gate.html"');
+  });
+});

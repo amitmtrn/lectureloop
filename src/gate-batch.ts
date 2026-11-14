@@ -200,8 +200,8 @@ export function initBatch(ctx: GateCtx): void {
             expected: spec.expected,
             got: res.verdict.verdict,
             latencyMs: res.latencyMs,
-            path: check.actual,
             attempts: res.attempts,
+            path: check.actual,
           };
         } catch (err) {
           console.warn('[LectureLoop] grading failed', spec.id, err);

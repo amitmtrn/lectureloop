@@ -1,1 +1,1 @@
-- **Init-failed reason.** `RouteInput.cloudInitFailed?: boolean` (set by the shell from `initError`) makes `cloudBlocker` say "Firebase failed to initialize" (R8.8).
+- **Parse wording.** `gateFriendlyError` ends a parse failure with "Run it again.", which fits Grade and the batch warm-up (R6.8).

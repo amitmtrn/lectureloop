@@ -12,7 +12,7 @@ export function gateFriendlyError(err: unknown, mode: InferenceMode): FriendlyEr
   if (err instanceof GradeParseError) {
     return {
       title: 'The model answered, but not in a readable format',
-      detail: `${err.message} Press Grade again.`,
+      detail: `${err.message} Run it again.`,
     };
   }
   if (err instanceof GradeTimeoutError) {

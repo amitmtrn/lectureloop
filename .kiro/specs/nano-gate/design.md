@@ -105,3 +105,10 @@ missed rose `#FB7185`; GO lime, NO-GO rose, INCONCLUSIVE amber. Motion is declar
 `@media (prefers-reduced-motion: no-preference)`.
 
 Privacy: the report contains only the built-in labelled set. Copy uses `navigator.clipboard`; nothing is stored.
+
+### Verified by test
+
+`test/gate-firebase.test.ts` loads the SDK's browser build (vitest would otherwise pick the Node build,
+which has no on-device adapter), stubs a fake `LanguageModel` and a throwing `fetch`, and grades through the
+placeholder app in `ONLY_ON_DEVICE`: the fake session is prompted and `fetch` is never called. With availability
+`unavailable` the call rejects and `fetch` is still not called.

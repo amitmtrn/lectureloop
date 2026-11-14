@@ -35,7 +35,8 @@ export const ON_DEVICE_CREATE_OPTIONS = {
 /** Applies to cloud calls only; the SDK has no on-device temperature option. */
 export const GRADE_TEMPERATURE = 0.1;
 
-const MAX_STUDENT_CHARS = 1200;
+/** The grader reads at most this many characters of the answer; gate.html's maxlength matches. */
+export const MAX_STUDENT_CHARS = 1200;
 const MAX_POINTS = 8;
 
 /** Cloud structured output (Gemini responseSchema). */

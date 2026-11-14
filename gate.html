@@ -93,7 +93,14 @@
 
         <div class="field">
           <label for="answer">Your answer (edit it)</label>
-          <textarea id="answer" rows="3" spellcheck="true"></textarea>
+          <textarea
+            id="answer"
+            rows="3"
+            maxlength="1200"
+            spellcheck="true"
+            aria-describedby="answer-hint"
+          ></textarea>
+          <p id="answer-hint" class="help">Up to 1200 characters are graded.</p>
         </div>
         <div class="row-actions">
           <button type="button" id="grade" class="btn btn-neutral">Grade</button>

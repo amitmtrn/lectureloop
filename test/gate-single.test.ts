@@ -71,6 +71,16 @@ beforeEach(() => {
   vi.spyOn(console, 'error').mockImplementation(() => {});
 });
 
+describe('answer length (R6.11)', () => {
+  it('limits the answer field to what the grader reads and says so', async () => {
+    const { MAX_STUDENT_CHARS } = await import('../src/grade');
+    const area = $id('answer') as HTMLTextAreaElement;
+    expect(area.maxLength).toBe(MAX_STUDENT_CHARS);
+    expect($id('answer-hint').textContent).toContain(String(MAX_STUDENT_CHARS));
+    expect(area.getAttribute('aria-describedby')).toBe('answer-hint');
+  });
+});
+
 describe('single grade UI', () => {
   it('asks for an answer and makes no SDK call when the answer is empty (R6.7)', async () => {
     initSingleGrade(makeCtx());

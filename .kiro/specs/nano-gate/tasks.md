@@ -27,4 +27,4 @@ Review fixes 2 (second review):
 - [x] T19 Report: "present, init failed" and the App Check status. (R7.15)
 - [x] T20 Spec drift: R4.1 wording and the module table. (R4.1)
 - [x] T21 Focus the result when a grade is blocked or fails. (R6.10)
-- [ ] T22 `maxlength` and hint on the answer field. (R6.11)
+- [x] T22 `maxlength` and hint on the answer field. (R6.11)

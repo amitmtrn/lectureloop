@@ -54,6 +54,7 @@ export function initSingleGrade(ctx: GateCtx): void {
     els.result.className = 'result is-failed';
     els.result.replaceChildren(pathBadge('failed'), el('p', 'blocked', reason));
     els.result.hidden = false;
+    els.result.focus();
   }
 
   function showResult(

@@ -90,6 +90,7 @@ describe('single grade UI', () => {
     expect($id('grade-result').hidden).toBe(false);
     expect($id('grade-result').textContent).toContain('Prepare Nano');
     expect($id('grade-result').querySelector('.chip-failed')).not.toBeNull();
+    expect(document.activeElement).toBe($id('grade-result'));
   });
 
   it('badges an on-device result teal and grades the typed answer (R6.3, R6.4)', async () => {
@@ -151,6 +152,7 @@ describe('single grade UI', () => {
     initSingleGrade(makeCtx());
     grade().click();
     await vi.waitFor(() => expect($id('grade-status').textContent).toBe('Failed.'));
+    expect(document.activeElement).toBe($id('grade-result'));
     expect($id('grade-result').textContent).toContain('not in a readable format');
     expect($id('grade-result').textContent).not.toContain('Something went wrong');
     expect($id('grade-result').querySelector('.chip-failed')).not.toBeNull();

@@ -90,7 +90,8 @@ export function planRoute(input: RouteInput): RoutePlan {
           ? {
               mode: InferenceMode.PREFER_ON_DEVICE,
               expectedPath: 'on_device',
-              reason: 'Auto: Nano is ready, so it runs on-device. The cloud is the fallback.',
+              reason:
+                'Auto: Nano is ready, so it runs on-device. It falls back to the cloud if Nano is not available.',
             }
           : {
               mode: InferenceMode.ONLY_ON_DEVICE,

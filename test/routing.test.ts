@@ -20,6 +20,12 @@ describe('planRoute auto', () => {
     });
   });
 
+  it('does not promise a cloud retry after an on-device error (R8.9)', () => {
+    const reason = plan({}).reason;
+    expect(reason).toContain('falls back to the cloud if Nano is not available');
+    expect(reason).not.toContain('The cloud is the fallback');
+  });
+
   it.each([
     ['offline', { online: false }, /offline/],
     ['cloud not configured', { cloudConfigured: false }, /not configured/],

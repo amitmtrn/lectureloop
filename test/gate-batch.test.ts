@@ -142,6 +142,54 @@ describe('batch go/no-go UI', () => {
     vi.unstubAllGlobals();
   });
 
+  it('updates the same #verdict live region in place and focuses it on every outcome', async () => {
+    const node = document.getElementById('verdict');
+    gradeAnswer.mockResolvedValue(grade('correct'));
+    initBatch(makeCtx());
+    click('run-batch');
+    await vi.waitFor(() =>
+      expect(document.getElementById('copy-md')).toHaveProperty('disabled', false),
+    );
+    expect(document.getElementById('verdict')).toBe(node);
+    expect(node?.getAttribute('role')).toBe('status');
+    expect(document.activeElement).toBe(node);
+  });
+
+  it('focuses the verdict and keeps the node when the plan is blocked', async () => {
+    const node = document.getElementById('verdict');
+    initBatch(makeCtx({ availability: 'downloadable' }));
+    click('run-batch');
+    await settle();
+    expect(document.getElementById('verdict')).toBe(node);
+    expect(document.activeElement).toBe(node);
+    expect(node?.textContent).toContain('INCONCLUSIVE');
+  });
+
+  it('focuses the verdict, drops the waiting rows and hides progress after a failed warm-up', async () => {
+    gradeAnswer.mockRejectedValue(new Error('Local LanguageModel API not available'));
+    initBatch(makeCtx());
+    click('run-batch');
+    await vi.waitFor(() =>
+      expect(document.getElementById('verdict')?.textContent).toContain('INCONCLUSIVE'),
+    );
+    expect(document.activeElement).toBe(document.getElementById('verdict'));
+    expect(document.querySelectorAll('#batch-rows tr')).toHaveLength(0);
+    expect(document.querySelector('.v-wait')).toBeNull();
+    expect((document.getElementById('batch-table') as HTMLElement).hidden).toBe(true);
+    expect((document.getElementById('batch-progress') as HTMLElement).hidden).toBe(true);
+  });
+
+  it('hides the progress bar after a finished run and clears the old verdict when re-run', async () => {
+    gradeAnswer.mockResolvedValue(grade('correct'));
+    initBatch(makeCtx());
+    click('run-batch');
+    await vi.waitFor(() =>
+      expect(document.getElementById('copy-md')).toHaveProperty('disabled', false),
+    );
+    expect((document.getElementById('batch-progress') as HTMLElement).hidden).toBe(true);
+    expect((document.getElementById('batch-table') as HTMLElement).hidden).toBe(false);
+  });
+
   it('plan for a device-only run matches the routing module', () => {
     expect(planRoute(makeCtx().routeInput('device')).mode).toBe(InferenceMode.ONLY_ON_DEVICE);
   });

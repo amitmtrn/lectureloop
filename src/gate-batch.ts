@@ -33,6 +33,7 @@ export function initBatch(ctx: GateCtx): void {
     fill: $('batch-fill'),
     out: $('batch-out'),
     verdict: $('verdict'),
+    tableWrap: $('batch-table'),
     metrics: $('metrics'),
     rows: $<HTMLTableSectionElement>('batch-rows'),
     copyJson: $<HTMLButtonElement>('copy-json'),
@@ -49,17 +50,18 @@ export function initBatch(ctx: GateCtx): void {
   }
 
   function renderVerdict(summary: BatchSummary, extra?: string): void {
-    const box = el('div', `verdict ${VERDICT_CLASS[summary.verdict]}`);
-    box.id = 'verdict';
-    box.setAttribute('role', 'status');
-    box.setAttribute('aria-live', 'polite');
-    box.tabIndex = -1;
-    box.append(
+    // Update the existing live region in place: a freshly inserted one is often not announced.
+    els.verdict.className = `verdict ${VERDICT_CLASS[summary.verdict]}`;
+    els.verdict.replaceChildren(
       el('span', 'word', `${VERDICT_ICON[summary.verdict]} ${summary.verdict}`),
       el('p', undefined, extra ?? summary.explanation),
     );
-    els.verdict.replaceWith(box);
-    els.verdict = box;
+  }
+
+  /** Drops the rows of items that never ran, and the whole table if none did. */
+  function trimRows(graded: number): void {
+    while (els.rows.children.length > graded) els.rows.lastElementChild?.remove();
+    els.tableWrap.hidden = graded === 0;
   }
 
   function tile(big: string, cap: string, rule?: { text: string; pass: boolean }): HTMLElement {
@@ -122,18 +124,22 @@ export function initBatch(ctx: GateCtx): void {
     if (running) return;
     const plan = planRoute(ctx.routeInput('device'));
     els.out.hidden = false;
-    els.rows.replaceChildren(...LABELLED_SET.map((_a, i) => renderRow(null, i)));
+    els.verdict.className = 'verdict';
+    els.verdict.replaceChildren();
     els.metrics.replaceChildren();
     report = null;
     els.copyJson.disabled = els.copyMd.disabled = true;
     els.copyStatus.textContent = '';
 
+    let graded = 0;
     const inconclusive = (why: string): void => {
-      const summary = summarizeBatch([]);
-      renderVerdict(summary, why);
+      trimRows(graded);
+      renderVerdict(summarizeBatch([]), why);
       els.status.textContent = 'Stopped.';
+      els.verdict.focus();
     };
     if (plan.mode === null) {
+      els.progress.hidden = true;
       inconclusive(plan.reason);
       return;
     }
@@ -142,6 +148,7 @@ export function initBatch(ctx: GateCtx): void {
 
     running = true;
     els.run.disabled = true;
+    els.tableWrap.hidden = false;
     els.rows.replaceChildren(...LABELLED_SET.map((_a, i) => renderRow(null, i)));
     setProgress(0);
     try {
@@ -187,6 +194,7 @@ export function initBatch(ctx: GateCtx): void {
           };
         }
         items.push(item);
+        graded = items.length;
         els.rows.children[i]?.replaceWith(renderRow(item, i));
         setProgress(i + 1);
       }
@@ -206,6 +214,7 @@ export function initBatch(ctx: GateCtx): void {
       els.status.textContent = `Done: ${summary.verdict}.`;
       els.verdict.focus();
     } finally {
+      els.progress.hidden = true;
       running = false;
       els.run.disabled = false;
     }

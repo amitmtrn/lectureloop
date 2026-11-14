@@ -1,1 +1,1 @@
-- **Links.** `index.html` links to `gate.html` and `gate.html` links to `./` (R1.7).
+- **README.** INCONCLUSIVE lists warm-up failure, timeout, no on-device result, off-device answers and failed calls.

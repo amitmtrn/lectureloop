@@ -48,3 +48,4 @@ Review fixes 4 (fourth review, NITs):
 - [x] T34 Fix for an unreadable Chrome version: "Could not read the Chrome version". (R2.17)
 - [x] T35 Use `build.rolldownOptions` instead of the deprecated `rollupOptions`.
 - [x] T36 Relative links between `index.html` and `gate.html`. (R1.7)
+- [x] T37 README: complete INCONCLUSIVE description. (R10.1)

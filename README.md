@@ -75,7 +75,7 @@ npm run dev
 
 What Chrome needs: desktop Chrome 139+, `chrome://flags/#prompt-api-for-gemini-nano-multimodal-input` enabled and Chrome relaunched, about 22 GB free disk, and 16 GB RAM with 4+ cores or more than 4 GB VRAM. Check `chrome://on-device-internals`.
 
-**GO** means all of these held with every answer run on-device: warm median latency at most 5000 ms, agreement with the labels at least 70%, and at least 90% of the clearly wrong answers not passed as correct. **NO-GO** means Nano ran but missed a threshold. **INCONCLUSIVE** means Nano did not run (or something ran off-device), so there is nothing to judge. The thresholds live in `GO_THRESHOLDS` in `src/gate-summary.ts`. The on-device SDK exposes no temperature setting, so the low grading temperature applies to cloud calls only.
+**GO** means all of these held with every answer run on-device: warm median latency at most 5000 ms, agreement with the labels at least 70%, and at least 90% of the clearly wrong answers not passed as correct. **NO-GO** means Nano ran but missed a threshold. **INCONCLUSIVE** means the run cannot be judged: the warm-up failed, a call timed out, no answer produced a result on-device, an answer ran off-device, or a failed call kept a passing run from being fully on-device. The thresholds live in `GO_THRESHOLDS` in `src/gate-summary.ts`. The on-device SDK exposes no temperature setting, so the low grading temperature applies to cloud calls only.
 
 To enable the cloud route on the page, see [docs/SETUP-FIREBASE.md](docs/SETUP-FIREBASE.md).
 

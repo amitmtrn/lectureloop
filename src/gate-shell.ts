@@ -201,7 +201,7 @@ export function initGateShell(deps: ShellDeps): Shell {
     const ready = deps.prepare(showProgress);
     void ready
       .then(() => {
-        els.prepareStatus.textContent = 'Gemini Nano is ready.';
+        els.prepareStatus.textContent = 'Gemini Nano is downloaded.';
       })
       .catch((err: unknown) => {
         console.error('[LectureLoop] prepare failed', err);

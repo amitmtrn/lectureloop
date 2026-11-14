@@ -177,7 +177,7 @@ export function initBatch(ctx: GateCtx): void {
       } catch (err) {
         console.error('[LectureLoop] warm-up failed', err);
         const f = gateFriendlyError(err, mode);
-        inconclusive(`Warm-up failed, so Nano did not run. ${f.title}. ${f.detail}`);
+        inconclusive(`Warm-up failed. ${f.title}. ${f.detail}`);
         return;
       }
 

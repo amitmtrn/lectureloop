@@ -97,6 +97,46 @@ describe('batch go/no-go UI', () => {
     );
   });
 
+  it('shows attempts per row and in the copied report', async () => {
+    const writeText = vi.fn(async (_text: string) => {});
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
+    gradeAnswer.mockResolvedValue({ ...grade('correct'), attempts: 2 });
+    initBatch(makeCtx());
+    click('run-batch');
+    await vi.waitFor(() =>
+      expect(document.getElementById('copy-json')).toHaveProperty('disabled', false),
+    );
+    const cells = document.querySelectorAll('#batch-rows tr:first-child td');
+    expect(cells).toHaveLength(6);
+    expect(cells[4]?.textContent).toBe('2');
+    click('copy-json');
+    click('copy-md');
+    await settle();
+    expect(JSON.parse(writeText.mock.calls[0]?.[0] as string).items[0].attempts).toBe(2);
+    expect(writeText.mock.calls[1]?.[0]).toContain('Attempts');
+    vi.unstubAllGlobals();
+  });
+
+  it('sets aria-valuemax from the labelled set', async () => {
+    gradeAnswer.mockResolvedValue(grade('correct'));
+    initBatch(makeCtx());
+    click('run-batch');
+    await settle();
+    expect(document.getElementById('batch-progress')?.getAttribute('aria-valuemax')).toBe(
+      String(LABELLED_SET.length),
+    );
+  });
+
+  it('does not claim Nano did not run when the warm-up fails', async () => {
+    gradeAnswer.mockRejectedValue(new Error('bad'));
+    initBatch(makeCtx());
+    click('run-batch');
+    await vi.waitFor(() =>
+      expect(document.getElementById('verdict')?.textContent).toContain('Warm-up failed.'),
+    );
+    expect(document.getElementById('verdict')?.textContent).not.toContain('did not run');
+  });
+
   it('shows INCONCLUSIVE and stops when the warm-up fails', async () => {
     gradeAnswer.mockRejectedValue(new Error('Local LanguageModel API not available'));
     initBatch(makeCtx());

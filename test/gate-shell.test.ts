@@ -177,7 +177,7 @@ describe('Prepare Nano', () => {
     click();
     expect(deps.prepare).toHaveBeenCalledTimes(1); // same tick as the click
     await vi.waitFor(() => expect(shell.ctx.env().availability).toBe('available'));
-    expect(text('prepare-status')).toBe('Gemini Nano is ready.');
+    expect(text('prepare-status')).toBe('Gemini Nano is downloaded.');
     expect(bar().hidden).toBe(true);
   });
 

@@ -21,7 +21,7 @@ Review fixes (code review of T1-T9):
 
 Review fixes 2 (second review):
 
-- [ ] T16 One inference at a time: shared `InferenceLock` on `GateCtx`; Grade disabled during a batch, Run disabled during a grade. (R6.9, R7.14)
+- [x] T16 One inference at a time: shared `InferenceLock` on `GateCtx`; Grade disabled during a batch, Run disabled during a grade. (R6.9, R7.14)
 - [ ] T17 Neutral page background; no teal or violet outside routing. (R1.3)
 - [ ] T18 App Check retry when `online` fires during the wait and it ends `stuck`. (R2.14)
 - [ ] T19 Report: "present, init failed" and the App Check status. (R7.15)

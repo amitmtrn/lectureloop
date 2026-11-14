@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { InferenceMode, type AI } from 'firebase/ai';
 import type * as GradeModule from '../src/grade';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { GateCtx } from '../src/gate-ctx';
+import { createInferenceLock, type GateCtx, type InferenceLock } from '../src/gate-ctx';
 import type { EnvSnapshot } from '../src/gate-env';
 import { LABELLED_SET } from '../src/gate-data';
 import { planRoute, type UserChoice } from '../src/routing';
@@ -29,6 +29,8 @@ const env: EnvSnapshot = {
   probed: true,
 };
 
+let lock: InferenceLock = createInferenceLock();
+
 function makeCtx(over: Partial<EnvSnapshot> = {}): GateCtx {
   const e = { ...env, ...over };
   return {
@@ -43,6 +45,7 @@ function makeCtx(over: Partial<EnvSnapshot> = {}): GateCtx {
       appCheckResponsive: false,
     }),
     onEnv: (fn) => fn(),
+    inference: lock,
   };
 }
 
@@ -57,6 +60,7 @@ const click = (id: string) => (document.getElementById(id) as HTMLButtonElement)
 const settle = () => new Promise((r) => setTimeout(r, 0));
 
 beforeEach(() => {
+  lock = createInferenceLock();
   const html = readFileSync('gate.html', 'utf8');
   document.body.innerHTML = /<body[^>]*>([\s\S]*)<\/body>/.exec(html)?.[1] ?? '';
   gradeAnswer.mockReset();

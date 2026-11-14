@@ -4,7 +4,7 @@ import { AIError, AIErrorCode, InferenceMode, type AI } from 'firebase/ai';
 import type * as GradeModule from '../src/grade';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SAMPLE_ANSWER } from '../src/gate-data';
-import type { GateCtx } from '../src/gate-ctx';
+import { createInferenceLock, type GateCtx, type InferenceLock } from '../src/gate-ctx';
 import { gateFriendlyError } from '../src/gate-errors';
 import type { DeviceAvailability, UserChoice } from '../src/routing';
 
@@ -21,6 +21,8 @@ interface Opts {
   availability: DeviceAvailability;
   cloud: boolean;
 }
+
+let lock: InferenceLock = createInferenceLock();
 
 function makeCtx(over: Partial<Opts> = {}): GateCtx {
   const o: Opts = { availability: 'available', cloud: false, ...over };
@@ -40,6 +42,7 @@ function makeCtx(over: Partial<Opts> = {}): GateCtx {
       appCheckResponsive: o.cloud,
     }),
     onEnv: (fn) => fn(),
+    inference: lock,
   };
 }
 
@@ -61,6 +64,7 @@ const choose = (value: string) => {
 };
 
 beforeEach(() => {
+  lock = createInferenceLock();
   const html = readFileSync('gate.html', 'utf8');
   document.body.innerHTML = /<body[^>]*>([\s\S]*)<\/body>/.exec(html)?.[1] ?? '';
   gradeAnswer.mockReset();

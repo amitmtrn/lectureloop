@@ -92,13 +92,16 @@ export function initSingleGrade(ctx: GateCtx): void {
     els.result.hidden = false;
   }
 
-  let busy = false;
+  // Grade is also disabled while the go/no-go batch holds the shared lock.
+  ctx.inference.onChange(() => {
+    els.grade.disabled = ctx.inference.busy();
+  });
   els.grade.addEventListener('click', () => {
     void onGrade();
   });
 
   async function onGrade(): Promise<void> {
-    if (busy) return;
+    if (ctx.inference.busy()) return;
     const studentAnswer = els.answer.value.trim();
     if (!studentAnswer) {
       els.status.textContent = 'Type an answer first.';
@@ -112,8 +115,8 @@ export function initSingleGrade(ctx: GateCtx): void {
       return;
     }
 
-    busy = true;
-    els.grade.disabled = true;
+    const release = ctx.inference.tryAcquire();
+    if (!release) return;
     els.status.textContent = 'Grading…';
     try {
       const res = await gradeAnswer(
@@ -136,8 +139,7 @@ export function initSingleGrade(ctx: GateCtx): void {
       showBlocked(`${friendly.title}. ${friendly.detail}`);
       els.status.textContent = 'Failed.';
     } finally {
-      busy = false;
-      els.grade.disabled = false;
+      release();
     }
   }
 }

@@ -8,7 +8,7 @@ import {
   type BrowserInfo,
   type EnvSnapshot,
 } from './gate-env';
-import type { GateCtx } from './gate-ctx';
+import { createInferenceLock, type GateCtx } from './gate-ctx';
 import { $, el, statusRow } from './gate-dom';
 import { allowsCloud, type GateFirebase } from './gate-firebase';
 import type { DeviceAvailability, RouteInput } from './routing';
@@ -241,7 +241,13 @@ export function initGateShell(deps: ShellDeps): Shell {
   window.addEventListener('offline', setOnline);
 
   return {
-    ctx: { fb, env: () => env, routeInput, onEnv: (fn) => (listeners.push(fn), fn()) },
+    ctx: {
+      fb,
+      env: () => env,
+      routeInput,
+      onEnv: (fn) => (listeners.push(fn), fn()),
+      inference: createInferenceLock(),
+    },
     refresh,
     start: () => {
       renderEnv();

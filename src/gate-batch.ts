@@ -41,7 +41,6 @@ export function initBatch(ctx: GateCtx): void {
     copyStatus: $('copy-status'),
   };
   let report: GateReport | null = null;
-  let running = false;
 
   function setProgress(done: number): void {
     els.progress.hidden = false;
@@ -120,8 +119,13 @@ export function initBatch(ctx: GateCtx): void {
     };
   }
 
+  // Run is also disabled while a single grade holds the shared lock.
+  ctx.inference.onChange(() => {
+    els.run.disabled = ctx.inference.busy();
+  });
+
   async function run(): Promise<void> {
-    if (running) return;
+    if (ctx.inference.busy()) return;
     const plan = planRoute(ctx.routeInput('device'));
     els.out.hidden = false;
     els.verdict.className = 'verdict';
@@ -146,8 +150,8 @@ export function initBatch(ctx: GateCtx): void {
     const mode = plan.mode;
     const opts = { allowCloud: allowsCloud(ctx.fb) };
 
-    running = true;
-    els.run.disabled = true;
+    const release = ctx.inference.tryAcquire();
+    if (!release) return;
     els.tableWrap.hidden = false;
     els.rows.replaceChildren(...LABELLED_SET.map((_a, i) => renderRow(null, i)));
     setProgress(0);
@@ -231,8 +235,7 @@ export function initBatch(ctx: GateCtx): void {
       els.verdict.focus();
     } finally {
       els.progress.hidden = true;
-      running = false;
-      els.run.disabled = false;
+      release();
     }
   }
 

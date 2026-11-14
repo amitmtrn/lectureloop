@@ -1,1 +1,1 @@
-- **Parse wording.** `gateFriendlyError` ends a parse failure with "Run it again.", which fits Grade and the batch warm-up (R6.8).
+- **Partial report.** `buildReport(summary, cold, items)` is shared by the normal path and the timeout stop; on a timeout the summary is `summarizeBatch(items)` with verdict INCONCLUSIVE and the stop message as explanation (R7.19).

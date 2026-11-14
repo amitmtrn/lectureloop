@@ -190,6 +190,39 @@ describe('batch go/no-go UI', () => {
     expect((document.getElementById('batch-progress') as HTMLElement).hidden).toBe(true);
   });
 
+  it('lets the user copy the graded rows after a timeout stop', async () => {
+    const writeText = vi.fn(async (_text: string) => {});
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
+    gradeAnswer
+      .mockResolvedValueOnce(grade('correct')) // warm-up
+      .mockResolvedValueOnce(grade('correct'))
+      .mockResolvedValueOnce(grade('correct'))
+      .mockRejectedValue(new GradeTimeoutError(60_000));
+    initBatch(makeCtx());
+    click('run-batch');
+    await vi.waitFor(() =>
+      expect(document.getElementById('copy-json')).toHaveProperty('disabled', false),
+    );
+    click('copy-json');
+    await settle();
+    const report = JSON.parse(writeText.mock.calls[0]?.[0] as string);
+    expect(report.items).toHaveLength(2);
+    expect(report.summary.verdict).toBe('INCONCLUSIVE');
+    vi.unstubAllGlobals();
+  });
+
+  it('keeps copy disabled when the timeout hits before any answer was graded', async () => {
+    gradeAnswer
+      .mockResolvedValueOnce(grade('correct'))
+      .mockRejectedValue(new GradeTimeoutError(60_000));
+    initBatch(makeCtx());
+    click('run-batch');
+    await vi.waitFor(() =>
+      expect(document.getElementById('verdict')?.textContent).toContain('INCONCLUSIVE'),
+    );
+    expect(document.getElementById('copy-json')).toHaveProperty('disabled', true);
+  });
+
   it('gives the warm-up the longer timeout', async () => {
     gradeAnswer.mockResolvedValue(grade('correct'));
     initBatch(makeCtx());

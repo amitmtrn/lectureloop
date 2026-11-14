@@ -249,6 +249,15 @@ export function initBatch(ctx: GateCtx): void {
         const f = gateFriendlyError(timedOut, mode);
         const why = `Stopped at answer ${graded + 1} of ${LABELLED_SET.length}. ${f.title}. ${f.detail}`;
         inconclusive(why);
+        if (items.length > 0) {
+          // The graded rows stay copyable; the verdict of a partial run is always INCONCLUSIVE.
+          report = buildReport(
+            { ...summarizeBatch(items), verdict: 'INCONCLUSIVE', explanation: why },
+            cold,
+            items,
+          );
+          els.copyJson.disabled = els.copyMd.disabled = false;
+        }
         return;
       }
 

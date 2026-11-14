@@ -44,3 +44,4 @@ Review fixes 4 (fourth review, NITs):
 - [x] T30 Hold the inference lock until a timed-out SDK call settles; show "Still waiting for the previous on-device call". (R5.11, R6.9)
 - [x] T31 Routing reason says "Firebase failed to initialize" when config is present but init threw. (R8.8)
 - [x] T32 Batch-neutral wording for a parse failure: "Run it again." (R6.8)
+- [x] T33 Timeout stop builds the report from the graded rows, so they can be copied. (R7.19)

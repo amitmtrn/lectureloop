@@ -112,7 +112,7 @@ export function summarizeBatch(
   let explanation: string;
   if (onDevice.length === 0) {
     verdict = 'INCONCLUSIVE';
-    explanation = 'Nano did not run on this machine, so there is nothing to judge.';
+    explanation = 'No answer produced a result on-device, so there is nothing to judge.';
   } else if (offDevice.length > 0) {
     verdict = 'INCONCLUSIVE';
     explanation = `${offDevice.length} answer(s) did not run on-device, so the result does not measure Nano alone.`;

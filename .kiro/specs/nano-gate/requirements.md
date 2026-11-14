@@ -99,6 +99,7 @@ response's `inferenceSource`.
 - R7.14 While a batch is running or a single grade is in flight, "Run go/no-go" shall be disabled (see R6.9).
 - R7.16 If the warm-up fails, then the message shall be neutral ("Warm-up failed.") and shall not claim that Nano did not run, because a malformed reply means it did.
 - R7.17 The progress bar's `aria-valuemax` shall come from the size of the labelled set, not a literal.
+- R7.18 If no answer produced a result on-device (for example every answer was malformed twice after a working warm-up), then the INCONCLUSIVE explanation shall say that no answer produced a result on-device and shall not claim that Nano did not run.
 - R4.6 The "Prepare Nano" success text shall say "Gemini Nano is downloaded." and the help text shall not claim the model is loaded, because an already-available model creates no session.
 - R2.16 The page shall not rebuild the "What to fix" and routing-plan live regions when their rendered content is unchanged, so screen readers do not re-announce them on each poll.
 - R7.15 The copied report's environment shall include the App Check status and shall say "present, init failed" (with the error) when config is present but initialization threw, not "not configured".

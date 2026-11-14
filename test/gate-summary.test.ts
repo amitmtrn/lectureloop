@@ -129,6 +129,9 @@ describe('summarizeBatch', () => {
     expect(summarizeBatch([]).verdict).toBe('INCONCLUSIVE');
     const allFailed = Array.from({ length: 4 }, () => item('correct', null, null, 'failed'));
     expect(summarizeBatch(allFailed).verdict).toBe('INCONCLUSIVE');
+    // The warm-up may have worked, so the text must not claim Nano did not run (R7.18).
+    expect(summarizeBatch(allFailed).explanation).not.toContain('did not run');
+    expect(summarizeBatch(allFailed).explanation).toContain('No answer produced a result');
   });
 
   it('is INCONCLUSIVE when any answer ran off-device or unreported', () => {

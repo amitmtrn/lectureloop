@@ -37,3 +37,7 @@ Review fixes 3 (third review):
 - [x] T26 Report `attempts` in the table, JSON and Markdown; latency stays total. (R7.3)
 - [x] T27 Design drift: `probeAvailability`/`probeBrowser`, batch stop on timeout keeps rows. (design)
 - [x] T28 `aria-valuemax` from `LABELLED_SET.length`. (R7.17)
+
+Review fixes 4 (fourth review, NITs):
+
+- [x] T29 Neutral wording when no answer produced a result: "No answer produced a result on-device". (R7.18)

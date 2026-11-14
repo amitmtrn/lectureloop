@@ -25,6 +25,8 @@ export interface BatchItem {
   /** null when the call failed. */
   got: Verdict | null;
   latencyMs: number | null;
+  /** Model calls made for this answer (2 when the first reply was malformed). */
+  attempts?: number;
   path: BatchPath;
   error?: string;
 }
@@ -181,11 +183,11 @@ export function toMarkdown(report: GateReport): string {
     `- Clearly wrong caught: ${pct(s.wrongCaught)} (min ${pct(report.thresholds.minWrongCaught)})`,
     '',
     '## Answers',
-    '| Answer | Expected | Got | Latency | Path |',
-    '| --- | --- | --- | --- | --- |',
+    '| Answer | Expected | Got | Latency | Attempts | Path |',
+    '| --- | --- | --- | --- | --- | --- |',
     ...report.items.map(
       (i) =>
-        `| ${cell(i.id)} | ${i.expected} | ${i.got ?? 'failed'} | ${ms(i.latencyMs)} | ${i.path} |`,
+        `| ${cell(i.id)} | ${i.expected} | ${i.got ?? 'failed'} | ${ms(i.latencyMs)} | ${i.attempts ?? 'n/a'} | ${i.path} |`,
     ),
     '',
   ];

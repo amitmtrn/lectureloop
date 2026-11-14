@@ -99,7 +99,7 @@ export function initBatch(ctx: GateCtx): void {
     const tr = el('tr');
     tr.append(el('td', undefined, spec?.id ?? ''), el('td', undefined, spec?.expected ?? ''));
     if (!item) {
-      tr.append(el('td', 'v-wait', 'waiting…'), el('td', 'num', ''), el('td'));
+      tr.append(el('td', 'v-wait', 'waiting…'), el('td', 'num', ''), el('td', 'num'), el('td'));
       return tr;
     }
     const got = item.got ?? 'failed';
@@ -108,7 +108,12 @@ export function initBatch(ctx: GateCtx): void {
     if (item.error) gotCell.title = item.error;
     const path = el('td');
     path.append(pathBadge(item.path as PathLabel));
-    tr.append(gotCell, el('td', 'num', ms(item.latencyMs)), path);
+    tr.append(
+      gotCell,
+      el('td', 'num', ms(item.latencyMs)),
+      el('td', 'num', item.attempts === undefined ? '' : String(item.attempts)),
+      path,
+    );
     return tr;
   }
 
@@ -195,6 +200,7 @@ export function initBatch(ctx: GateCtx): void {
             got: res.verdict.verdict,
             latencyMs: res.latencyMs,
             path: check.actual,
+            attempts: res.attempts,
           };
         } catch (err) {
           console.warn('[LectureLoop] grading failed', spec.id, err);

@@ -85,7 +85,7 @@ response's `inferenceSource`.
 
 - R7.1 The page shall include a built-in labelled set of 12 short answers (correct, partial, clearly wrong) over 4 cards.
 - R7.2 When the user presses "Run go/no-go", the page shall run one warm-up call first and report its latency separately as cold latency, then grade the set on-device one answer at a time with a progress indicator.
-- R7.3 The page shall show a table with expected verdict, got verdict, latency and path for every answer.
+- R7.3 The page shall show a table with expected verdict, got verdict, latency, attempts and path for every answer. The copied JSON and Markdown report shall include attempts. Latency stays the total across attempts (R5.8).
 - R7.4 The summary shall show warm median latency, agreement (got equals expected), and the share of clearly wrong answers caught (graded `partial` or `missed`, not `correct`).
 - R7.5 The verdict shall be GO if warm median latency is at most 5000 ms, agreement is at least 70% and clearly wrong caught is at least 90%, with every answer run on-device.
 - R7.6 If no answer completed on-device, or any answer ran off-device, then the verdict shall be INCONCLUSIVE. Otherwise a failed threshold gives NO-GO. If all thresholds pass but any answer produced no result (a failed call), then the verdict shall be INCONCLUSIVE and the explanation shall not say "all on-device". GO therefore requires every answer to have run on-device.

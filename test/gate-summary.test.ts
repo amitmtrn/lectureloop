@@ -155,6 +155,7 @@ describe('summarizeBatch', () => {
 describe('report output', () => {
   const items = LABELLED_SET.slice(0, 2).map((a) => ({
     ...item(a.expected, a.expected),
+    attempts: 2,
     id: a.id,
     answer: a.answer,
   }));
@@ -175,7 +176,8 @@ describe('report output', () => {
     const md = toMarkdown(report);
     expect(md).toContain('# Nano go/no-go:');
     expect(md).toContain('Cold latency (warm-up call): 9000 ms');
-    expect(md).toContain('| photo-correct | correct | correct | 1000 ms | on_device |');
+    expect(md).toContain('| photo-correct | correct | correct | 1000 ms | 2 | on_device |');
+    expect(md).toContain('| Answer | Expected | Got | Latency | Attempts | Path |');
   });
 });
 

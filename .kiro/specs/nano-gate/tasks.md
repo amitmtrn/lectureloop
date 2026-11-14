@@ -17,4 +17,4 @@ Review fixes (code review of T1-T9):
 - [x] T12 Batch UI: update the verdict live region in place, focus on every INCONCLUSIVE, no stale "waiting…" rows, hide progress after a run. (R1.6, R7.12, R7.13)
 - [x] T13 Single grade: gate-specific friendly errors, route-coloured Grade button, list semantics for fixes, tests for `gate-single`. (R1.3, R1.6, R6.4-R6.8)
 - [x] T14 Grade core: strict numeric confidence, strip `"""` from the answer, drop `minimum`/`maximum` from the on-device schema. (R5.1, R5.3, R5.5)
-- [ ] T15 Per-call timeout with a clear error; Grade and Run recover; batch stops on timeout. (R5.10, R6.8, R7.11)
+- [x] T15 Per-call timeout with a clear error; Grade and Run recover; batch stops on timeout. (R5.10, R6.8, R7.11)

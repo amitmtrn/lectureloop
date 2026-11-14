@@ -26,10 +26,12 @@ const {
   gradeAnswer,
   gradeJsonSchema,
   GradeParseError,
+  GradeTimeoutError,
   GRADE_TEMPERATURE,
   parseVerdict,
   prepareGradeDevice,
   runGrade,
+  withTimeout,
 } = await import('../src/grade');
 const { OnDeviceUnavailableError } = await import('../src/ai');
 
@@ -252,5 +254,38 @@ describe('review fixes: prompt delimiter and on-device schema', () => {
   it('does not use minimum or maximum in the on-device responseConstraint', () => {
     expect(JSON.stringify(gradeJsonSchema)).not.toMatch(/minimum|maximum/);
     expect(gradeJsonSchema.properties.confidence).toEqual({ type: 'number' });
+  });
+});
+
+describe('per-call timeout', () => {
+  it('withTimeout passes through a result that arrives in time', async () => {
+    await expect(withTimeout(Promise.resolve(7), 50)).resolves.toBe(7);
+  });
+
+  it('withTimeout keeps the original error', async () => {
+    await expect(withTimeout(Promise.reject(new Error('boom')), 50)).rejects.toThrow('boom');
+  });
+
+  it('withTimeout rejects with a clear GradeTimeoutError', async () => {
+    vi.useFakeTimers();
+    try {
+      const p = withTimeout(new Promise<never>(() => {}), 60_000);
+      const assertion = expect(p).rejects.toThrow('did not answer within 60 s');
+      await vi.advanceTimersByTimeAsync(60_000);
+      await assertion;
+      await expect(p).rejects.toBeInstanceOf(GradeTimeoutError);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('gradeAnswer fails with a timeout when the on-device call hangs', async () => {
+    generateContent.mockReturnValue(new Promise(() => {}));
+    await expect(
+      gradeAnswer({} as AI, InferenceMode.ONLY_ON_DEVICE, input, {
+        allowCloud: false,
+        timeoutMs: 20,
+      }),
+    ).rejects.toBeInstanceOf(GradeTimeoutError);
   });
 });

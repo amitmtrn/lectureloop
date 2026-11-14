@@ -221,9 +221,43 @@ export function getGradeModel(ai: AI, mode: InferenceMode): GenerativeModel {
   return model;
 }
 
+/** Per model call. A hung on-device session would otherwise leave the page stuck. */
+export const GRADE_TIMEOUT_MS = 60_000;
+/** The first on-device call loads the model into memory, which can take a while. */
+export const WARMUP_TIMEOUT_MS = 180_000;
+
+export class GradeTimeoutError extends Error {
+  constructor(public readonly timeoutMs: number) {
+    super(`The model did not answer within ${Math.round(timeoutMs / 1000)} s.`);
+    this.name = 'GradeTimeoutError';
+  }
+}
+
+/**
+ * Rejects with `GradeTimeoutError` if `promise` has not settled after `ms`. The underlying call
+ * cannot be cancelled (the SDK takes no abort signal for on-device), so a late result is dropped.
+ */
+export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new GradeTimeoutError(ms)), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err: unknown) => {
+        clearTimeout(timer);
+        reject(err instanceof Error ? err : new Error(String(err)));
+      },
+    );
+  });
+}
+
 export interface GradeAnswerOptions {
   /** False for the placeholder Firebase app: only ONLY_ON_DEVICE may run. */
   allowCloud: boolean;
+  /** Limit for each model call. Defaults to `GRADE_TIMEOUT_MS`. */
+  timeoutMs?: number;
 }
 
 export class CloudNotAllowedError extends Error {
@@ -249,7 +283,10 @@ export function gradeAnswer(
     if (mode === InferenceMode.ONLY_ON_DEVICE && !hasOnDeviceAdapter(model)) {
       throw new OnDeviceUnavailableError();
     }
-    const result = await model.generateContent(prompt);
+    const result = await withTimeout(
+      model.generateContent(prompt),
+      options.timeoutMs ?? GRADE_TIMEOUT_MS,
+    );
     const source = result.response.inferenceSource;
     console.info(`[LectureLoop] grade inferenceSource: ${source ?? 'missing'}`);
     if (mode === InferenceMode.ONLY_ON_DEVICE && source !== 'on_device') {

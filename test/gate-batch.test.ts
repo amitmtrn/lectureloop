@@ -15,6 +15,7 @@ vi.mock('../src/grade', async (importOriginal) => ({
 }));
 
 const { initBatch } = await import('../src/gate-batch');
+const { GradeTimeoutError } = await import('../src/grade');
 
 const env: EnvSnapshot = {
   browser: { name: 'Chrome', major: 141, isMobile: false },
@@ -123,6 +124,35 @@ describe('batch go/no-go UI', () => {
     );
     expect(document.querySelector('#batch-rows .chip-cloud')).not.toBeNull();
     expect(document.getElementById('verdict')?.textContent).toContain('INCONCLUSIVE');
+  });
+
+  it('stops with INCONCLUSIVE when a call times out, keeps finished rows and re-enables Run', async () => {
+    gradeAnswer
+      .mockResolvedValueOnce(grade('correct')) // warm-up
+      .mockResolvedValueOnce(grade('correct'))
+      .mockResolvedValueOnce(grade('correct'))
+      .mockRejectedValue(new GradeTimeoutError(60_000));
+    initBatch(makeCtx());
+    click('run-batch');
+    await vi.waitFor(() =>
+      expect(document.getElementById('verdict')?.textContent).toContain('INCONCLUSIVE'),
+    );
+    expect(document.getElementById('verdict')?.textContent).toContain('did not answer within 60 s');
+    expect(gradeAnswer).toHaveBeenCalledTimes(4);
+    expect(document.querySelectorAll('#batch-rows tr')).toHaveLength(2);
+    expect(document.querySelector('.v-wait')).toBeNull();
+    expect(document.activeElement).toBe(document.getElementById('verdict'));
+    expect(document.getElementById('run-batch')).toHaveProperty('disabled', false);
+    expect((document.getElementById('batch-progress') as HTMLElement).hidden).toBe(true);
+  });
+
+  it('gives the warm-up the longer timeout', async () => {
+    gradeAnswer.mockResolvedValue(grade('correct'));
+    initBatch(makeCtx());
+    click('run-batch');
+    await vi.waitFor(() => expect(gradeAnswer).toHaveBeenCalled());
+    expect(gradeAnswer.mock.calls[0]?.[3]).toMatchObject({ timeoutMs: 180_000 });
+    expect(gradeAnswer.mock.calls[1]?.[3].timeoutMs).toBeUndefined();
   });
 
   it('copies JSON and Markdown to the clipboard', async () => {

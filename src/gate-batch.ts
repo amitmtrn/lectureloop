@@ -15,7 +15,7 @@ import {
   type BatchSummary,
   type GateReport,
 } from './gate-summary';
-import { gradeAnswer } from './grade';
+import { GradeTimeoutError, gradeAnswer, WARMUP_TIMEOUT_MS } from './grade';
 import { classifyPath, planRoute } from './routing';
 
 const VERDICT_CLASS = {
@@ -157,7 +157,10 @@ export function initBatch(ctx: GateCtx): void {
       els.status.textContent = 'Warm-up call (loads the model, can take a while)…';
       let cold: number;
       try {
-        const warm = await gradeAnswer(ctx.fb.ai, mode, toGradeInput(first), opts);
+        const warm = await gradeAnswer(ctx.fb.ai, mode, toGradeInput(first), {
+          ...opts,
+          timeoutMs: WARMUP_TIMEOUT_MS,
+        });
         const check = classifyPath(plan.expectedPath, warm.source);
         if (check.mismatch) throw new Error(check.message);
         cold = warm.latencyMs;
@@ -169,6 +172,7 @@ export function initBatch(ctx: GateCtx): void {
       }
 
       const items: BatchItem[] = [];
+      let timedOut: GradeTimeoutError | null = null;
       for (const [i, spec] of LABELLED_SET.entries()) {
         els.status.textContent = `Grading ${i + 1} of ${LABELLED_SET.length}…`;
         let item: BatchItem;
@@ -184,6 +188,10 @@ export function initBatch(ctx: GateCtx): void {
           };
         } catch (err) {
           console.warn('[LectureLoop] grading failed', spec.id, err);
+          if (err instanceof GradeTimeoutError) {
+            timedOut = err;
+            break;
+          }
           item = {
             id: spec.id,
             expected: spec.expected,
@@ -197,6 +205,14 @@ export function initBatch(ctx: GateCtx): void {
         graded = items.length;
         els.rows.children[i]?.replaceWith(renderRow(item, i));
         setProgress(i + 1);
+      }
+
+      if (timedOut) {
+        const f = gateFriendlyError(timedOut, mode);
+        inconclusive(
+          `Stopped at answer ${graded + 1} of ${LABELLED_SET.length}. ${f.title}. ${f.detail}`,
+        );
+        return;
       }
 
       const summary = summarizeBatch(items);

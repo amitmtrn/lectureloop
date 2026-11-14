@@ -15,7 +15,7 @@ vi.mock('../src/grade', async (importOriginal) => ({
 }));
 
 const { initSingleGrade } = await import('../src/gate-single');
-const { GradeParseError, CloudNotAllowedError } = await import('../src/grade');
+const { GradeParseError, GradeTimeoutError, CloudNotAllowedError } = await import('../src/grade');
 
 interface Opts {
   availability: DeviceAvailability;
@@ -150,6 +150,15 @@ describe('single grade UI', () => {
     expect($id('grade-result').textContent).toContain('not in a readable format');
     expect($id('grade-result').textContent).not.toContain('Something went wrong');
     expect($id('grade-result').querySelector('.chip-failed')).not.toBeNull();
+    expect(grade().disabled).toBe(false);
+  });
+
+  it('reports a timeout clearly and re-enables Grade', async () => {
+    gradeAnswer.mockRejectedValue(new GradeTimeoutError(60_000));
+    initSingleGrade(makeCtx());
+    grade().click();
+    await vi.waitFor(() => expect($id('grade-status').textContent).toBe('Failed.'));
+    expect($id('grade-result').textContent).toContain('did not answer within 60 s');
     expect(grade().disabled).toBe(false);
   });
 

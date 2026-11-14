@@ -1,6 +1,6 @@
 import { AIError, AIErrorCode, type InferenceMode } from 'firebase/ai';
 import { toFriendlyError, type FriendlyError } from './errors';
-import { CloudNotAllowedError, GradeParseError } from './grade';
+import { CloudNotAllowedError, GradeParseError, GradeTimeoutError } from './grade';
 
 const SEE_FIXES = 'See "What to fix" above, then press "Prepare Nano" if it is listed.';
 
@@ -13,6 +13,12 @@ export function gateFriendlyError(err: unknown, mode: InferenceMode): FriendlyEr
     return {
       title: 'The model answered, but not in a readable format',
       detail: `${err.message} Press Grade again.`,
+    };
+  }
+  if (err instanceof GradeTimeoutError) {
+    return {
+      title: 'The model took too long',
+      detail: `${err.message} Try again. If it keeps happening, check chrome://on-device-internals or reload the page.`,
     };
   }
   if (err instanceof CloudNotAllowedError) {

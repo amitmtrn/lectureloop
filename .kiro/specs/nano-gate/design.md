@@ -85,8 +85,8 @@ Item: `{expected, got|null, latencyMs|null, path: on_device|in_cloud|unknown|fai
 - `agreement` = items with `got === expected` / all items.
 - `wrongCaught` = clearly wrong items (expected `missed`) with `got` in `partial|missed` / clearly wrong items.
 - Verdict: INCONCLUSIVE if no item ran on-device, or any item is `in_cloud` or `unknown`. If thresholds pass but any item failed, INCONCLUSIVE too (GO needs `ranOnDevice === total`). A failed item still counts against agreement and wrong-caught, so parse failures that sink a threshold stay NO-GO. A failed item whose `errorKind` is `call` (anything but `GradeParseError`; `gradeAnswer` throws for an off-device or unreported source, so off-device answers reach the batch this way) makes the verdict INCONCLUSIVE, checked after the off-device branch and before the thresholds (T44).
+- Otherwise GO if `warmMedianMs <= maxWarmMedianMs && agreement >= minAgreement && wrongCaught >= minWrongCaught`, else NO-GO.
 - `BatchItem.attempts` comes from `GradeResult.attempts`; `latencyMs` stays the total over attempts and the table and report show both.
-  Else GO if `warmMedianMs <= maxWarmMedianMs && agreement >= minAgreement && wrongCaught >= minWrongCaught`, else NO-GO.
 - Ratios compare with a 1e-9 tolerance so 7/10 passes a 0.7 threshold.
 - `GO_THRESHOLDS = {maxWarmMedianMs: 5000, minAgreement: 0.7, minWrongCaught: 0.9}`; `summarizeBatch(items, thresholds = GO_THRESHOLDS)`.
 
@@ -141,6 +141,15 @@ placeholder app in `ONLY_ON_DEVICE`: the fake session is prompted and `fetch` is
 - **Report.** `environmentRecord` writes `Firebase config` as `present`, `present, init failed: <error>` or `not configured`, and adds `App Check`.
 - **Failure focus.** `showBlocked` focuses the result, as the success path does; the result is un-hidden first.
 - **Answer length.** The textarea has `maxlength=1200` (same value as `MAX_STUDENT_CHARS`, now exported) and a hint line.
+
+## Review fixes 3
+
+- **GO needs every answer on-device (T23).** If thresholds pass but any item failed, `summarizeBatch` returns INCONCLUSIVE and the explanation does not say "all on-device" (R7.5, R7.6).
+- **Live regions (T24).** `#fixes` and `#plan` go through `setChildren`, which skips identical markup, so screen readers are not re-announced (R2.16).
+- **Wording (T25).** Prepare success reads "Gemini Nano is downloaded." (an already-available model creates no session) and a failed warm-up reads "Warm-up failed." without claiming Nano did not run (R4.6, R7.16).
+- **Attempts (T26).** `BatchItem.attempts` is copied from `GradeResult.attempts` and shown in the table, JSON and Markdown; `latencyMs` stays the total over attempts (R7.3).
+- **Design drift (T27).** `probeAvailability` and `probeBrowser` in `gate-env.ts` are the real probes; a batch stop on timeout keeps the graded rows.
+- **Progress bar (T28).** `aria-valuemax` comes from `LABELLED_SET.length` (R7.17).
 
 ## Review fixes 4
 

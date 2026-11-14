@@ -66,3 +66,4 @@ Review fixes 6 (sixth review, NITs):
 - [x] T46 Timeout text depends on the mode: connection hint for cloud calls. (R5.12)
 - [x] T47 Failed-row error is visible text in the table and listed in the Markdown report. (R7.20)
 - [x] T48 Prepare gives up after a progress stall: message, button and poll recover. (R4.7)
+- [x] T49 Design: add the missing "Review fixes 3" section and move the orphaned "Else GO" sentence under the verdict bullet. (design)

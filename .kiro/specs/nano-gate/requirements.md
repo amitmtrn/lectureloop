@@ -16,8 +16,8 @@ response's `inferenceSource`.
 - R1.4 The gate page shall present results in large type that is readable at 1920x1080.
 - R1.5 While the user prefers reduced motion, the page shall not animate (progress, stamps, transitions).
 - R1.6 When a result, status or progress value changes, the page shall announce it through an `aria-live` region that stays in the DOM and is updated in place (never replaced by a new node), and every control shall have an accessible label.
-- R1.7 The links between the study-pack page and the gate page shall be relative, so the site works under a non-root `base`.
 - R1.7 The page shall never encode meaning by colour alone (every colour is paired with text).
+- R1.8 The links between the study-pack page and the gate page shall be relative, so the site works under a non-root `base`.
 
 ## R2 Environment panel
 
@@ -36,6 +36,8 @@ response's `inferenceSource`.
 - R2.13 While App Check is still being checked, the routing reason shall say it is still checking, not that reCAPTCHA failed to load.
 - R2.14 If the browser fires `online` while App Check is `stuck`, or fires `online` during an App Check wait that then ends `stuck`, then the page shall check App Check again.
 - R2.15 If availability is `unknown` with `LanguageModel` present, then the panel shall say that the probe failed and suggest reloading.
+- R2.16 The page shall not rebuild the "What to fix" and routing-plan live regions when their rendered content is unchanged, so screen readers do not re-announce them on each poll.
+- R2.17 If the browser is Chrome on desktop but its major version could not be read, then the panel shall list a fix saying so and asking for desktop Chrome 139 or newer, so a red Browser row never appears next to "Nothing to fix".
 
 ## R3 On-device test without a Firebase project
 
@@ -51,8 +53,9 @@ response's `inferenceSource`.
 - R4.1 When the user presses "Prepare Nano", the page shall call `initializeDeviceModel` (through `prepareGradeDevice`, so the download is tracked on the grade model's adapter) inside that click.
 - R4.2 While the model downloads, the page shall show a progress bar with the percentage, and expose it as `role="progressbar"` with `aria-valuenow`.
 - R4.3 When preparation finishes, the page shall re-probe availability and update the environment panel.
-- R4.5 While the model downloads, the polite status text shall change at most once per 10% step, so screen readers are not flooded; the progress bar itself still updates on every event.
 - R4.4 If preparation fails, then the page shall show the error and the relevant fix.
+- R4.5 While the model downloads, the polite status text shall change at most once per 10% step, so screen readers are not flooded; the progress bar itself still updates on every event.
+- R4.6 The "Prepare Nano" success text shall say "Gemini Nano is downloaded." and the help text shall not claim the model is loaded, because an already-available model creates no session.
 
 ## R5 Grading core
 
@@ -65,7 +68,6 @@ response's `inferenceSource`.
 - R5.7 If the first response is malformed, then the runner shall retry once; if the second is malformed it shall fail with the parse error.
 - R5.8 The runner shall return the verdict, the `inferenceSource` exactly as reported (never defaulted), the total latency in ms and the number of attempts.
 - R5.9 Before an `ONLY_ON_DEVICE` call, the runner shall check `hasOnDeviceAdapter`; if the response of an `ONLY_ON_DEVICE` call did not come from the device it shall fail.
-
 - R5.10 If a single model call has not settled after a timeout (default 60 s; 180 s for the batch warm-up call), then the runner shall reject with a timeout error that names the limit. The call itself cannot be cancelled, but the page shall recover.
 - R5.11 If a call timed out, then the timeout error shall expose a promise that settles when the abandoned SDK call finally settles, and the page shall keep the shared inference lock until then, because a late `createSession` would destroy the session of the next call. While the lock is held for that reason, Grade and Run shall stay disabled and the status text shall say "Still waiting for the previous on-device call to finish", and shall say that the call finished once it did.
 
@@ -99,14 +101,11 @@ response's `inferenceSource`.
 - R7.12 When the batch stops before grading (blocked plan, failed warm-up, timeout), the page shall not leave "waiting…" rows for items that never ran. After every run the progress bar shall be hidden.
 - R7.13 Every INCONCLUSIVE outcome shall move focus to the verdict, as GO and NO-GO do.
 - R7.14 While a batch is running or a single grade is in flight, "Run go/no-go" shall be disabled (see R6.9).
+- R7.15 The copied report's environment shall include the App Check status and shall say "present, init failed" (with the error) when config is present but initialization threw, not "not configured".
 - R7.16 If the warm-up fails, then the message shall be neutral ("Warm-up failed.") and shall not claim that Nano did not run, because a malformed reply means it did.
 - R7.17 The progress bar's `aria-valuemax` shall come from the size of the labelled set, not a literal.
 - R7.18 If no answer produced a result on-device (for example every answer was malformed twice after a working warm-up), then the INCONCLUSIVE explanation shall say that no answer produced a result on-device and shall not claim that Nano did not run.
 - R7.19 If the batch stops on a timeout after at least one answer was graded, then the page shall enable "Copy JSON" and "Copy Markdown" for a report of the graded rows whose verdict is INCONCLUSIVE. If no answer was graded, copying stays disabled.
-- R4.6 The "Prepare Nano" success text shall say "Gemini Nano is downloaded." and the help text shall not claim the model is loaded, because an already-available model creates no session.
-- R2.16 The page shall not rebuild the "What to fix" and routing-plan live regions when their rendered content is unchanged, so screen readers do not re-announce them on each poll.
-- R2.17 If the browser is Chrome on desktop but its major version could not be read, then the panel shall list a fix saying so and asking for desktop Chrome 139 or newer, so a red Browser row never appears next to "Nothing to fix".
-- R7.15 The copied report's environment shall include the App Check status and shall say "present, init failed" (with the error) when config is present but initialization threw, not "not configured".
 
 ## R8 Routing
 

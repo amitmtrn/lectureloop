@@ -29,8 +29,8 @@
 body.gate {
   margin: 0;
   background:
-    radial-gradient(900px 400px at 10% -10%, rgb(45 212 191 / 14%), transparent 70%),
-    radial-gradient(900px 400px at 100% -10%, rgb(167 139 250 / 14%), transparent 70%), var(--bg);
+    radial-gradient(900px 400px at 10% -10%, rgb(148 163 184 / 10%), transparent 70%),
+    radial-gradient(900px 400px at 100% -10%, rgb(148 163 184 / 6%), transparent 70%), var(--bg);
   color: var(--text);
   font-size: 1.125rem;
   line-height: 1.55;

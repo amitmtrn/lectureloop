@@ -38,6 +38,7 @@ response's `inferenceSource`.
 - R2.15 If availability is `unknown` with `LanguageModel` present, then the panel shall say that the probe failed and suggest reloading.
 - R2.16 The page shall not rebuild the "What to fix" and routing-plan live regions when their rendered content is unchanged, so screen readers do not re-announce them on each poll.
 - R2.17 If the browser is Chrome on desktop but its major version could not be read, then the panel shall list a fix saying so and asking for desktop Chrome 139 or newer, so a red Browser row never appears next to "Nothing to fix".
+- R2.18 When the device checks pass and Firebase is simply not configured (no init error), the panel shall say "Nothing to fix" and show the "Cloud is not configured" hint as a separate informational line, not as a fix.
 
 ## R3 On-device test without a Firebase project
 
@@ -69,7 +70,7 @@ response's `inferenceSource`.
 - R5.8 The runner shall return the verdict, the `inferenceSource` exactly as reported (never defaulted), the total latency in ms and the number of attempts.
 - R5.9 Before an `ONLY_ON_DEVICE` call, the runner shall check `hasOnDeviceAdapter`; if the response of an `ONLY_ON_DEVICE` call did not come from the device it shall fail.
 - R5.10 If a single model call has not settled after a timeout (default 60 s; 180 s for the batch warm-up call), then the runner shall reject with a timeout error that names the limit. The call itself cannot be cancelled, but the page shall recover.
-- R5.11 If a call timed out, then the timeout error shall expose a promise that settles when the abandoned SDK call finally settles, and the page shall keep the shared inference lock until then, because a late `createSession` would destroy the session of the next call. While the lock is held for that reason, Grade and Run shall stay disabled and the status text shall say "Still waiting for the previous on-device call to finish", and shall say that the call finished once it did.
+- R5.11 If a call timed out, then the timeout error shall expose a promise that settles when the abandoned SDK call finally settles, and the page shall keep the shared inference lock until then, because a late `createSession` would destroy the session of the next call. While the lock is held for that reason, Grade and Run shall stay disabled and the status text shall say "Still waiting for the previous model call to finish", and shall say that the call finished once it did.
 
 ## R6 Single grade
 
@@ -81,7 +82,7 @@ response's `inferenceSource`.
 - R6.6 If the plan is blocked, then the page shall show the blocked reason and shall not call the SDK.
 - R6.7 If the student answer is empty, then the page shall ask for an answer and shall not call the SDK.
 - R6.8 If grading fails (including a timeout), then the page shall show a readable error that fits the gate page (no advice about switching modes on the main page) and re-enable the Grade button. A malformed model reply shall be reported as such, not as "Something went wrong".
-- R6.9 While a batch go/no-go run or another grade is in flight, the Grade button shall be disabled and no second call shall start. Grade and Run share one inference lock, because a second on-device session on the same adapter destroys the first call's session.
+- R6.9 While a batch go/no-go run or another grade is in flight, the Grade button shall be disabled and no second call shall start. Grade and Run share one inference lock, because overlapping calls skew the timing and a late call can still be running inside the SDK (each model has its own adapter, so the lock is about timing, not shared sessions).
 - R6.10 If a grade is blocked or fails, then focus shall move to the result, as on success.
 - R6.11 The answer field shall carry `maxlength` equal to the grading limit (1200 characters) and a visible hint, so no text is cut silently.
 

@@ -50,3 +50,11 @@ Review fixes 4 (fourth review, NITs):
 - [x] T36 Relative links between `index.html` and `gate.html`. (R1.8)
 - [x] T37 README: complete INCONCLUSIVE description. (R10.1)
 - [x] T38 Requirements order: R2.16 and R2.17 under R2, R4.5/R4.6 in order under R4, R7.15 in order under R7; R1.8 numbering. (spec)
+
+Review fixes 5 (fifth review, NITs):
+
+- [x] T39 Design restored from git and "Review fixes 4" appended. (design)
+- [ ] T40 "Nothing to fix" shows when only the cloud is unconfigured; the cloud hint is a separate info line. (R2.18)
+- [ ] T41 `LATE_CALL_NOTE` says "previous model call". (R5.11)
+- [ ] T42 Prepare failures use `gateFriendlyError`. (R4.4)
+- [ ] T43 Lock comments no longer say "same adapter". (R6.9)

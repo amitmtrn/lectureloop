@@ -12,10 +12,10 @@ response's `inferenceSource`.
 
 - R1.1 The build shall emit `gate.html` as a second Vite rollup input in addition to `index.html`.
 - R1.2 The main page footer shall link to `gate.html`.
-- R1.3 The gate page shall use a dark theme with teal `#2DD4BF` for on-device and violet `#A78BFA` for cloud, and use them for nothing else.
+- R1.3 The gate page shall use a dark theme with teal `#2DD4BF` for on-device and violet `#A78BFA` for cloud, and use them for nothing else. A button shall be teal or violet only when the route it starts is on-device or cloud respectively; a button whose route is not yet decided shall be neutral.
 - R1.4 The gate page shall present results in large type that is readable at 1920x1080.
 - R1.5 While the user prefers reduced motion, the page shall not animate (progress, stamps, transitions).
-- R1.6 When a result, status or progress value changes, the page shall announce it through an `aria-live` region, and every control shall have an accessible label.
+- R1.6 When a result, status or progress value changes, the page shall announce it through an `aria-live` region that stays in the DOM and is updated in place (never replaced by a new node), and every control shall have an accessible label.
 - R1.7 The page shall never encode meaning by colour alone (every colour is paired with text).
 
 ## R2 Environment panel
@@ -25,12 +25,16 @@ response's `inferenceSource`.
 - R2.3 If the browser is not Chrome 139 or newer on desktop, then the panel shall say so and tell the user to use desktop Chrome 139+.
 - R2.4 If `LanguageModel` is missing, then the panel shall tell the user to enable `chrome://flags/#prompt-api-for-gemini-nano-multimodal-input` and relaunch Chrome.
 - R2.5 If availability is `unavailable`, then the panel shall list the requirements (about 22 GB free disk, 16 GB RAM and 4 CPU cores or more than 4 GB VRAM) and point to `chrome://on-device-internals`.
-- R2.6 If availability is `downloadable`, then the panel shall tell the user to press "Prepare Nano"; if `downloading`, to wait for the download.
+- R2.6 If availability is `downloadable`, then the panel shall tell the user to press "Prepare Nano"; if `downloading`, to wait for the download. While availability is `downloading`, the page shall re-probe it periodically, so the panel, the plan and the batch unblock without a reload.
 - R2.7 If `LanguageModel` exists but the SDK did not attach its adapter, then the panel shall report that and suggest reloading the page.
 - R2.8 If the browser is offline, then the panel shall state that the cloud path is unavailable and the device path is unaffected.
 - R2.9 If Firebase config is missing, then the panel shall list the missing env vars and point to `docs/SETUP-FIREBASE.md`.
 - R2.10 If App Check does not answer in time, then the panel shall say that reCAPTCHA did not load and that cloud calls are disabled.
-- R2.11 When everything needed is fine, the panel shall say that no fixes are needed.
+- R2.11 When everything needed is fine, the panel shall say that no fixes are needed. It shall not say so while availability is `unknown` (the probe failed), and before the first probe has finished it shall say that it is checking instead of listing device fixes.
+- R2.12 If Firebase config is present but initialization throws, then the panel shall show the "Firebase failed to initialize" fix with the error text, shall not show the "not configured" fix, and the cloud shall be unusable (the page runs on the placeholder app). The environment state shall distinguish "config present" from "cloud usable".
+- R2.13 While App Check is still being checked, the routing reason shall say it is still checking, not that reCAPTCHA failed to load.
+- R2.14 If App Check was `stuck` and the browser fires `online`, then the page shall check App Check again.
+- R2.15 If availability is `unknown` with `LanguageModel` present, then the panel shall say that the probe failed and suggest reloading.
 
 ## R3 On-device test without a Firebase project
 
@@ -46,19 +50,22 @@ response's `inferenceSource`.
 - R4.1 When the user presses "Prepare Nano", the page shall call `initializeDeviceModel` (through `prepareOnDevice`) inside that click.
 - R4.2 While the model downloads, the page shall show a progress bar with the percentage, and expose it as `role="progressbar"` with `aria-valuenow`.
 - R4.3 When preparation finishes, the page shall re-probe availability and update the environment panel.
+- R4.5 While the model downloads, the polite status text shall change at most once per 10% step, so screen readers are not flooded; the progress bar itself still updates on every event.
 - R4.4 If preparation fails, then the page shall show the error and the relevant fix.
 
 ## R5 Grading core
 
-- R5.1 The `grade` module shall build a short prompt from `{question, referenceAnswer, keyPoints[], studentAnswer}` that treats the student answer as data, not instructions.
+- R5.1 The `grade` module shall build a short prompt from `{question, referenceAnswer, keyPoints[], studentAnswer}` that treats the student answer as data, not instructions. The answer is delimited by `"""`; the module shall remove any run of three or more double quotes from the answer so it cannot close the delimiter.
 - R5.2 The module shall request a verdict `{verdict: "correct"|"partial"|"missed", missedPoints: string[], confidence: number 0..1, reason: string}`.
-- R5.3 For cloud calls the module shall pass `responseMimeType: application/json`, a `responseSchema` and a low temperature; for on-device calls it shall pass a JSON Schema as `responseConstraint` with text-only English `createOptions`.
+- R5.3 For cloud calls the module shall pass `responseMimeType: application/json`, a `responseSchema` and a low temperature; for on-device calls it shall pass a JSON Schema as `responseConstraint` with text-only English `createOptions`. The on-device JSON Schema shall not use `minimum`/`maximum` (Chrome's constraint engine may reject them); the parser clamps instead.
 - R5.4 When a response is fenced, chatty or has extra whitespace, the parser shall still return the verdict.
-- R5.5 If `verdict` is missing or not one of the three values, or `confidence` is missing or not a number, then the parser shall throw a parse error.
+- R5.5 If `verdict` is missing or not one of the three values, or `confidence` is missing or not a JSON number (a numeric string such as `"0.8"` is not a number), then the parser shall throw a parse error.
 - R5.6 If `confidence` is outside 0..1, then the parser shall clamp it. If `reason` or `missedPoints` is missing, the parser shall use `""` or `[]`.
 - R5.7 If the first response is malformed, then the runner shall retry once; if the second is malformed it shall fail with the parse error.
 - R5.8 The runner shall return the verdict, the `inferenceSource` exactly as reported (never defaulted), the total latency in ms and the number of attempts.
 - R5.9 Before an `ONLY_ON_DEVICE` call, the runner shall check `hasOnDeviceAdapter`; if the response of an `ONLY_ON_DEVICE` call did not come from the device it shall fail.
+
+- R5.10 If a single model call has not settled after a timeout (default 60 s; 180 s for the batch warm-up call), then the runner shall reject with a timeout error that names the limit. The call itself cannot be cancelled, but the page shall recover.
 
 ## R6 Single grade
 
@@ -69,6 +76,7 @@ response's `inferenceSource`.
 - R6.5 If the actual path differs from the expected path, then the page shall show a visible mismatch warning.
 - R6.6 If the plan is blocked, then the page shall show the blocked reason and shall not call the SDK.
 - R6.7 If the student answer is empty, then the page shall ask for an answer and shall not call the SDK.
+- R6.8 If grading fails (including a timeout), then the page shall show a readable error that fits the gate page (no advice about switching modes on the main page) and re-enable the Grade button. A malformed model reply shall be reported as such, not as "Something went wrong".
 
 ## R7 Batch go/no-go
 
@@ -82,6 +90,9 @@ response's `inferenceSource`.
 - R7.8 A failed or unparseable item shall count as disagreement and as not caught, and shall not contribute to latency.
 - R7.9 When the user presses "Copy JSON" or "Copy Markdown", the page shall copy the report to the clipboard with no network access, and the page shall keep no answers beyond its own memory.
 - R7.10 If the warm-up fails, then the page shall stop, show the error and show INCONCLUSIVE.
+- R7.11 If any call times out (R5.10), then the page shall stop the batch, show INCONCLUSIVE with the timeout, and re-enable "Run go/no-go".
+- R7.12 When the batch stops before grading (blocked plan, failed warm-up, timeout), the page shall not leave "waiting…" rows for items that never ran. After every run the progress bar shall be hidden.
+- R7.13 Every INCONCLUSIVE outcome shall move focus to the verdict, as GO and NO-GO do.
 
 ## R8 Routing
 

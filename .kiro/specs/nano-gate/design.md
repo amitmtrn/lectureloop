@@ -113,3 +113,15 @@ Privacy: the report contains only the built-in labelled set. Copy uses `navigato
 which has no on-device adapter), stubs a fake `LanguageModel` and a throwing `fetch`, and grades through the
 placeholder app in `ONLY_ON_DEVICE`: the fake session is prompted and `fetch` is never called. With availability
 `unavailable` the call rejects and `fetch` is still not called.
+
+## Review fixes
+
+- **Env state.** `EnvSnapshot.configured` now means "cloud usable" (real Firebase app was built). New fields: `initError?: string` (config present, `initializeApp`/App Check threw; the page runs on the placeholder app) and `probed: boolean` (first availability probe finished). `environmentFixes` shows `appcheck-init` with the error text when `initError` is set and skips the `config` fix then. Before the first probe the panel shows "Checking this machine…" and no device fixes. `unknown` availability with `LanguageModel` present gives a `probe-failed` fix, so "Nothing to fix" never shows then.
+- **Routing reason.** `RouteInput.appCheckChecking?: boolean` makes `cloudBlocker` say "App Check is still being checked" instead of "not responding".
+- **Shell.** The page shell moves from `gate.ts` to `gate-shell.ts` as `initGateShell(deps)` with injectable probe, adapter check, prepare, App Check check and timings, so jsdom tests can drive it. `gate.ts` only wires real dependencies. While availability is `downloading` (and no Prepare is running) the shell re-probes every `pollMs` (3 s). An `online` event re-runs the App Check wait if the state is `stuck`. Prepare status text changes once per 10% bucket.
+- **Verdict region.** `#verdict` stays in the DOM; `renderVerdict` sets its class and children. Every outcome, including INCONCLUSIVE, focuses it.
+- **Batch stop.** A blocked plan, failed warm-up or timeout clears the rows and hides the table; every run hides the progress bar in `finally`.
+- **Errors.** `src/gate-errors.ts` wraps `toFriendlyError`: parse errors and timeouts get their own text; the main-page "switch to Prefer on-device" advice is replaced by a pointer to the "What to fix" list.
+- **Grade button.** Neutral until the plan resolves; teal for an on-device plan, violet for cloud. The fixes list is a plain `<ul>` inside a `role="status"` wrapper.
+- **Parser and prompt.** Confidence must be a JSON number. Runs of `"""` are removed from the student answer. The on-device schema has no `minimum`/`maximum`.
+- **Timeout.** `withTimeout(promise, ms)` rejects with `GradeTimeoutError`. `gradeAnswer` takes `timeoutMs` (default 60 000); the batch passes 180 000 for the warm-up. The underlying SDK call cannot be aborted, so a late reply is ignored. A timeout in the batch stops it.

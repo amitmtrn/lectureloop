@@ -87,6 +87,7 @@ export function initGateShell(deps: ShellDeps): Shell {
       cloudConfigured: env.configured,
       appCheckResponsive: env.appCheck === 'responding',
       appCheckChecking: env.appCheck === 'checking',
+      cloudInitFailed: env.initError !== undefined,
     };
   }
 

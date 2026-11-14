@@ -114,6 +114,7 @@ response's `inferenceSource`.
 - R8.5 If the choice is `device`, then the plan shall be `ONLY_ON_DEVICE` when the device is ready and blocked otherwise, never falling back to the cloud.
 - R8.6 If the choice is `cloud`, then the plan shall be `ONLY_IN_CLOUD` when the cloud is usable and blocked otherwise.
 - R8.7 A pure function `classifyPath(expectedPath, inferenceSource)` shall return the actual path (`on_device`, `in_cloud` or `unknown`) and flag a mismatch against the expected path.
+- R8.8 If Firebase config is present but initialization threw, then a blocked cloud reason shall say that Firebase failed to initialize, not that it is not configured.
 
 ## R9 Tests
 

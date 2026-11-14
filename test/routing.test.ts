@@ -82,6 +82,13 @@ describe('planRoute cloud', () => {
     });
   });
 
+  it('says Firebase failed to initialize when config is present but init threw', () => {
+    const p = plan({ userChoice: 'cloud', cloudConfigured: false, cloudInitFailed: true });
+    expect(p.mode).toBeNull();
+    expect(p.reason).toContain('failed to initialize');
+    expect(p.reason).not.toContain('not configured');
+  });
+
   it.each([
     [{ cloudConfigured: false }, /not configured/],
     [{ online: false }, /offline/],

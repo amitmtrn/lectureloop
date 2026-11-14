@@ -15,6 +15,8 @@ export interface RouteInput {
   appCheckResponsive: boolean;
   /** App Check has not answered yet but the wait is not over. */
   appCheckChecking?: boolean;
+  /** Config is present but Firebase initialization threw. */
+  cloudInitFailed?: boolean;
 }
 
 export interface RoutePlan {
@@ -43,7 +45,9 @@ function deviceBlocker(input: RouteInput): string | null {
 }
 
 function cloudBlocker(input: RouteInput): string | null {
-  if (!input.cloudConfigured) return 'Firebase is not configured';
+  if (!input.cloudConfigured) {
+    return input.cloudInitFailed ? 'Firebase failed to initialize' : 'Firebase is not configured';
+  }
   if (!input.online) return 'the browser is offline';
   if (!input.appCheckResponsive && input.appCheckChecking) {
     return 'App Check is still being checked (try again in a few seconds)';

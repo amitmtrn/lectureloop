@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <meta
+      name="description"
+      content="Does Gemini Nano run well enough on this machine? A GO / NO-GO test for LectureLoop."
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>Nano go/no-go · LectureLoop</title>
+  </head>
+  <body class="gate">
+    <main class="wrap">
+      <header class="top">
+        <p class="eyebrow">LectureLoop · Session 1</p>
+        <h1>Nano go/no-go</h1>
+        <p class="lead">
+          Does Gemini Nano run well enough on this laptop to build on? Check the environment, grade
+          one answer, then run the 12-answer test.
+        </p>
+        <ul class="legend" aria-label="Route colours">
+          <li><span class="chip chip-device">ON-DEVICE</span> ran on this laptop</li>
+          <li><span class="chip chip-cloud">CLOUD</span> ran in Gemini through Firebase</li>
+        </ul>
+        <p class="back"><a href="./">&larr; Back to LectureLoop</a></p>
+      </header>
+
+      <section class="panel" aria-labelledby="env-title">
+        <h2 id="env-title">1. Environment</h2>
+        <div class="stations">
+          <article class="station station-device" aria-labelledby="st-device">
+            <h3 id="st-device"><span class="dot" aria-hidden="true"></span>Device · Gemini Nano</h3>
+            <dl class="rows" id="rows-device"></dl>
+          </article>
+          <article class="station station-cloud" id="station-cloud" aria-labelledby="st-cloud">
+            <h3 id="st-cloud"><span class="dot" aria-hidden="true"></span>Cloud · Gemini</h3>
+            <dl class="rows" id="rows-cloud"></dl>
+          </article>
+        </div>
+        <div id="fixes-wrap" class="fixes">
+          <h3>What to fix</h3>
+          <div role="status" aria-live="polite"><ul id="fixes" role="list"></ul></div>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="prep-title">
+        <h2 id="prep-title">2. Prepare Nano</h2>
+        <p class="help">
+          Starts the Gemini Nano download if needed. Chrome only allows this from a click, so press
+          the button once.
+        </p>
+        <div class="row-actions">
+          <button type="button" id="prepare" class="btn btn-device">Prepare Nano</button>
+          <span id="prepare-status" class="status" role="status" aria-live="polite"></span>
+        </div>
+        <div
+          id="progress"
+          class="progress"
+          role="progressbar"
+          aria-label="Gemini Nano download progress"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="0"
+          hidden
+        >
+          <div id="progress-fill" class="progress-fill"></div>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="one-title">
+        <h2 id="one-title">3. Grade one answer</h2>
+        <div class="card">
+          <p class="q" id="card-q"></p>
+          <p class="label">Reference answer</p>
+          <p id="card-ref"></p>
+          <p class="label">Key points</p>
+          <ul id="card-points"></ul>
+        </div>
+
+        <fieldset class="field">
+          <legend>Where should it run?</legend>
+          <div class="choices" id="choices">
+            <label><input type="radio" name="route" value="auto" checked /><span>Auto</span></label>
+            <label
+              ><input type="radio" name="route" value="device" /><span>Device only</span></label
+            >
+            <label><input type="radio" name="route" value="cloud" /><span>Cloud only</span></label>
+          </div>
+          <p id="plan" class="plan" role="status" aria-live="polite"></p>
+        </fieldset>
+
+        <div class="field">
+          <label for="answer">Your answer (edit it)</label>
+          <textarea
+            id="answer"
+            rows="3"
+            maxlength="1200"
+            spellcheck="true"
+            aria-describedby="answer-hint"
+          ></textarea>
+          <p id="answer-hint" class="help">Up to 1200 characters are graded.</p>
+        </div>
+        <div class="row-actions">
+          <button type="button" id="grade" class="btn btn-neutral">Grade</button>
+          <span id="grade-status" class="status" role="status" aria-live="polite"></span>
+        </div>
+        <div
+          id="grade-result"
+          class="result"
+          hidden
+          tabindex="-1"
+          role="region"
+          aria-label="Grade result"
+          aria-live="polite"
+        ></div>
+      </section>
+
+      <section class="panel" aria-labelledby="batch-title">
+        <h2 id="batch-title">4. Run go/no-go</h2>
+        <p class="help">
+          One warm-up call (reported as cold latency), then 12 labelled answers graded on-device,
+          one at a time. GO needs: warm median &le; 5 s, agreement &ge; 70%, clearly wrong answers
+          caught &ge; 90%, all on-device.
+        </p>
+        <div class="row-actions">
+          <button type="button" id="run-batch" class="btn btn-device">Run go/no-go</button>
+          <span id="batch-status" class="status" role="status" aria-live="polite"></span>
+        </div>
+        <div
+          id="batch-progress"
+          class="progress"
+          role="progressbar"
+          aria-label="Go/no-go test progress"
+          aria-valuemin="0"
+          aria-valuenow="0"
+          hidden
+        >
+          <div id="batch-fill" class="progress-fill"></div>
+        </div>
+
+        <div id="batch-out" hidden>
+          <div id="verdict" class="verdict" role="status" aria-live="polite" tabindex="-1"></div>
+          <div id="metrics" class="tiles"></div>
+          <div class="table-wrap" id="batch-table">
+            <table class="results">
+              <caption class="visually-hidden">
+                Expected and actual verdict for each answer
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Answer</th>
+                  <th scope="col">Expected</th>
+                  <th scope="col">Got</th>
+                  <th scope="col" class="num">Latency</th>
+                  <th scope="col" class="num">Attempts</th>
+                  <th scope="col">Path</th>
+                </tr>
+              </thead>
+              <tbody id="batch-rows"></tbody>
+            </table>
+          </div>
+          <div class="row-actions">
+            <button type="button" id="copy-json" class="btn btn-ghost">Copy JSON</button>
+            <button type="button" id="copy-md" class="btn btn-ghost">Copy Markdown</button>
+            <span id="copy-status" class="status" role="status" aria-live="polite"></span>
+          </div>
+        </div>
+      </section>
+
+      <footer class="foot">
+        <p>
+          Nothing leaves this page except cloud calls you start yourself. Results are kept only in
+          memory.
+        </p>
+      </footer>
+    </main>
+    <script type="module" src="/src/gate.ts"></script>
+  </body>
+</html>

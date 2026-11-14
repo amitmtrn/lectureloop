@@ -62,3 +62,5 @@ Review fixes 5 (fifth review, NITs):
 Review fixes 6 (sixth review, NITs):
 
 - [x] T44 A row that failed for a non-parse error (`errorKind: 'call'`) makes the verdict INCONCLUSIVE, so infrastructure errors no longer read NO-GO. (R7.6, R7.8)
+- [x] T45 Routing reason says the cloud is used only if Nano is not available. (R8.9)
+- [x] T46 Timeout text depends on the mode: connection hint for cloud calls. (R5.12)

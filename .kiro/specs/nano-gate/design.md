@@ -161,3 +161,9 @@ placeholder app in `ONLY_ON_DEVICE`: the fake session is prompted and `fetch` is
 - **Late-call wording (T41).** `LATE_CALL_NOTE` says "previous model call", because a timed-out cloud call holds the lock too (R5.11).
 - **Prepare errors (T42).** A failed Prepare passes through `gateFriendlyError(err, ONLY_ON_DEVICE)`, like Grade and Run, and shows `title. detail` (R4.4).
 - **Lock rationale (T43).** In `@firebase/ai` 3.0.0 each `GenerativeModel` (one per mode) has its own `ChromeAdapterImpl` and `oldSession`, so the `PREFER_ON_DEVICE` and `ONLY_ON_DEVICE` models do not destroy each other's sessions. The lock stays for timing and for late calls.
+
+## Review fixes 6
+
+- **Call failures (T44).** See the verdict bullet under "Batch summary": `BatchItem.errorKind` separates `parse` from `call` failures (R7.6, R7.8).
+- **Prefer reason (T45).** The `PREFER_ON_DEVICE` reason says "It falls back to the cloud if Nano is not available". The SDK picks the cloud only when availability is not `available` at call time; an error during an on-device call is thrown (R8.9).
+- **Timeout hint (T46).** `gateFriendlyError` picks the timeout hint from `mode` (`TIMEOUT_HINT`): on-device-internals, connection, or both for the prefer modes (R5.12).

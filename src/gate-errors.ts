@@ -1,6 +1,15 @@
-import { AIError, AIErrorCode, type InferenceMode } from 'firebase/ai';
+import { AIError, AIErrorCode, InferenceMode } from 'firebase/ai';
 import { toFriendlyError, type FriendlyError } from './errors';
 import { CloudNotAllowedError, GradeParseError, GradeTimeoutError } from './grade';
+
+const TIMEOUT_HINT: Record<InferenceMode, string> = {
+  [InferenceMode.ONLY_ON_DEVICE]: 'check chrome://on-device-internals or reload the page',
+  [InferenceMode.ONLY_IN_CLOUD]: 'check your internet connection or reload the page',
+  [InferenceMode.PREFER_ON_DEVICE]:
+    'check chrome://on-device-internals and your internet connection, or reload the page',
+  [InferenceMode.PREFER_IN_CLOUD]:
+    'check your internet connection and chrome://on-device-internals, or reload the page',
+};
 
 const SEE_FIXES = 'See "What to fix" above, then press "Prepare Nano" if it is listed.';
 
@@ -18,7 +27,7 @@ export function gateFriendlyError(err: unknown, mode: InferenceMode): FriendlyEr
   if (err instanceof GradeTimeoutError) {
     return {
       title: 'The model took too long',
-      detail: `${err.message} Try again. If it keeps happening, check chrome://on-device-internals or reload the page.`,
+      detail: `${err.message} Try again. If it keeps happening, ${TIMEOUT_HINT[mode]}.`,
     };
   }
   if (err instanceof CloudNotAllowedError) {

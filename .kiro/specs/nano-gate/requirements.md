@@ -71,6 +71,7 @@ response's `inferenceSource`.
 - R5.9 Before an `ONLY_ON_DEVICE` call, the runner shall check `hasOnDeviceAdapter`; if the response of an `ONLY_ON_DEVICE` call did not come from the device it shall fail.
 - R5.10 If a single model call has not settled after a timeout (default 60 s; 180 s for the batch warm-up call), then the runner shall reject with a timeout error that names the limit. The call itself cannot be cancelled, but the page shall recover.
 - R5.11 If a call timed out, then the timeout error shall expose a promise that settles when the abandoned SDK call finally settles, and the page shall keep the shared inference lock until then, because a late `createSession` on the same model's adapter would destroy the session of the next call. While the lock is held for that reason, Grade and Run shall stay disabled and the status text shall say "Still waiting for the previous model call to finish", and shall say that the call finished once it did.
+- R5.12 If a call times out, then the error text shall name the check that fits the mode: `chrome://on-device-internals` for `ONLY_ON_DEVICE`, the internet connection for `ONLY_IN_CLOUD`, and both for the prefer modes.
 
 ## R6 Single grade
 
@@ -118,6 +119,7 @@ response's `inferenceSource`.
 - R8.6 If the choice is `cloud`, then the plan shall be `ONLY_IN_CLOUD` when the cloud is usable and blocked otherwise.
 - R8.7 A pure function `classifyPath(expectedPath, inferenceSource)` shall return the actual path (`on_device`, `in_cloud` or `unknown`) and flag a mismatch against the expected path.
 - R8.8 If Firebase config is present but initialization threw, then a blocked cloud reason shall say that Firebase failed to initialize, not that it is not configured.
+- R8.9 The auto reason for `PREFER_ON_DEVICE` shall say it falls back to the cloud if Nano is not available, and shall not promise a retry after an on-device error, because the SDK decides on availability at call time and throws on-device errors.
 
 ## R9 Tests
 

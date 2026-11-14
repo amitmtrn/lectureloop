@@ -104,6 +104,7 @@ response's `inferenceSource`.
 - R7.19 If the batch stops on a timeout after at least one answer was graded, then the page shall enable "Copy JSON" and "Copy Markdown" for a report of the graded rows whose verdict is INCONCLUSIVE. If no answer was graded, copying stays disabled.
 - R4.6 The "Prepare Nano" success text shall say "Gemini Nano is downloaded." and the help text shall not claim the model is loaded, because an already-available model creates no session.
 - R2.16 The page shall not rebuild the "What to fix" and routing-plan live regions when their rendered content is unchanged, so screen readers do not re-announce them on each poll.
+- R2.17 If the browser is Chrome on desktop but its major version could not be read, then the panel shall list a fix saying so and asking for desktop Chrome 139 or newer, so a red Browser row never appears next to "Nothing to fix".
 - R7.15 The copied report's environment shall include the App Check status and shall say "present, init failed" (with the error) when config is present but initialization threw, not "not configured".
 
 ## R8 Routing

@@ -114,7 +114,12 @@ export function environmentFixes(env: EnvSnapshot): Fix[] {
       id: 'browser',
       text: `This is ${describeBrowser(browser)}. Use desktop Chrome 139 or newer.`,
     });
-  } else if (browser.major !== null && browser.major < MIN_CHROME_MAJOR) {
+  } else if (browser.major === null) {
+    fixes.push({
+      id: 'version-unknown',
+      text: `Could not read the Chrome version. Use desktop Chrome ${MIN_CHROME_MAJOR} or newer.`,
+    });
+  } else if (browser.major < MIN_CHROME_MAJOR) {
     fixes.push({
       id: 'version',
       text: `Chrome ${browser.major} is too old. Update to Chrome ${MIN_CHROME_MAJOR} or newer (desktop).`,

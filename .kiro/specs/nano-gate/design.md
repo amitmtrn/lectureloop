@@ -1,1 +1,1 @@
-- **Partial report.** `buildReport(summary, cold, items)` is shared by the normal path and the timeout stop; on a timeout the summary is `summarizeBatch(items)` with verdict INCONCLUSIVE and the stop message as explanation (R7.19).
+- **Unreadable version.** `environmentFixes` adds `version-unknown` when `browser.major === null` for desktop Chrome (R2.17).

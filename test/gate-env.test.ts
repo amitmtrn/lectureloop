@@ -78,6 +78,12 @@ describe('environmentFixes', () => {
     expect(ids({ browser: { name: 'Chrome', major: 141, isMobile: true } })).toContain('desktop');
   });
 
+  it('lists a fix when Chrome is detected but its version is unreadable', () => {
+    expect(ids({ browser: { name: 'Chrome', major: null, isMobile: false } })).toContain(
+      'version-unknown',
+    );
+  });
+
   it('gives the exact flag when LanguageModel is missing', () => {
     const fixes = environmentFixes({
       ...good,

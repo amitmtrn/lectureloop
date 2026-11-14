@@ -158,3 +158,4 @@ placeholder app in `ONLY_ON_DEVICE`: the fake session is prompted and `fetch` is
 ## Review fixes 5
 
 - **Cloud hint (T40).** `environmentFixes` no longer reports "Cloud is not configured". `cloudHint(env)` returns that text (or null when configured or when init failed, which has its own fix). The shell renders it as a separate `li.fix-info` after "Nothing to fix", so the device verdict stays clear without a Firebase project (R2.18).
+- **Late-call wording (T41).** `LATE_CALL_NOTE` says "previous model call", because a timed-out cloud call holds the lock too (R5.11).

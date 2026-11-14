@@ -56,8 +56,8 @@ export function createInferenceLock(): InferenceLock {
 }
 
 export const LATE_CALL_NOTE =
-  'Still waiting for the previous on-device call to finish. If this does not clear, reload the page.';
-export const LATE_CALL_DONE = 'The previous on-device call finished. You can run again.';
+  'Still waiting for the previous model call to finish. If this does not clear, reload the page.';
+export const LATE_CALL_DONE = 'The previous model call finished. You can run again.';
 
 /** What the gate sections need from the page shell. */
 export interface GateCtx {

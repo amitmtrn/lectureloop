@@ -99,7 +99,7 @@ describe('inference lock (one on-device call at a time)', () => {
     btn('run-batch').click();
     await vi.waitFor(() =>
       expect(document.getElementById('batch-status')?.textContent).toContain(
-        'Still waiting for the previous on-device call',
+        'Still waiting for the previous model call',
       ),
     );
     expect(btn('run-batch').disabled).toBe(true);
@@ -125,7 +125,7 @@ describe('inference lock (one on-device call at a time)', () => {
     btn('grade').click();
     await vi.waitFor(() =>
       expect(document.getElementById('grade-status')?.textContent).toContain(
-        'Still waiting for the previous on-device call',
+        'Still waiting for the previous model call',
       ),
     );
     expect(btn('grade').disabled).toBe(true);

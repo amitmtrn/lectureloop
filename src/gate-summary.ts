@@ -115,8 +115,13 @@ export function summarizeBatch(
     verdict = 'INCONCLUSIVE';
     explanation = `${offDevice.length} answer(s) did not run on-device, so the result does not measure Nano alone.`;
   } else if (checks.every((c) => c.pass)) {
-    verdict = 'GO';
-    explanation = 'All three thresholds passed, all on-device.';
+    if (failed > 0) {
+      verdict = 'INCONCLUSIVE';
+      explanation = `Thresholds passed, but ${failed} answer(s) produced no result, so not every answer ran on-device.`;
+    } else {
+      verdict = 'GO';
+      explanation = 'All three thresholds passed, all on-device.';
+    }
   } else {
     verdict = 'NO-GO';
     explanation = `Failed: ${checks

@@ -28,3 +28,12 @@ Review fixes 2 (second review):
 - [x] T20 Spec drift: R4.1 wording and the module table. (R4.1)
 - [x] T21 Focus the result when a grade is blocked or fails. (R6.10)
 - [x] T22 `maxlength` and hint on the answer field. (R6.11)
+
+Review fixes 3 (third review):
+
+- [x] T23 GO requires every answer to have run on-device: failed calls give INCONCLUSIVE when thresholds pass. (R7.5, R7.6)
+- [x] T24 Do not rebuild unchanged live regions (`#fixes`, `#plan`). (R2.16)
+- [x] T25 Wording: "Gemini Nano is downloaded." and neutral "Warm-up failed." (R4.6, R7.16)
+- [x] T26 Report `attempts` in the table, JSON and Markdown; latency stays total. (R7.3)
+- [x] T27 Design drift: `probeAvailability`/`probeBrowser`, batch stop on timeout keeps rows. (design)
+- [x] T28 `aria-valuemax` from `LABELLED_SET.length`. (R7.17)

@@ -90,6 +90,30 @@ describe('summarizeBatch', () => {
     expect(s.verdict).toBe('NO-GO');
   });
 
+  it('is not GO when a correct or partial answer failed, even if thresholds pass (R7.5)', () => {
+    // 12 items: 9/12 agree = 75%, all 3 clearly wrong caught, three failures on non-wrong answers.
+    const items = [
+      item('correct', 'correct'),
+      item('correct', 'correct'),
+      item('correct', null, null, 'failed'),
+      item('correct', null, null, 'failed'),
+      item('partial', 'partial'),
+      item('partial', 'partial'),
+      item('partial', null, null, 'failed'),
+      item('partial', 'partial'),
+      item('partial', 'partial'),
+      item('missed', 'missed'),
+      item('missed', 'missed'),
+      item('missed', 'missed'),
+    ];
+    const s = summarizeBatch(items);
+    expect(s.agreement).toBe(0.75);
+    expect(s.wrongCaught).toBe(1);
+    expect(s.verdict).toBe('INCONCLUSIVE');
+    expect(s.explanation).not.toContain('all on-device');
+    expect(s.explanation).toContain('3 answer(s) produced no result');
+  });
+
   it('counts failures as disagreement and not caught, without latency', () => {
     const items = [...perfect(), item('missed', null, null, 'failed')];
     const s = summarizeBatch(items);

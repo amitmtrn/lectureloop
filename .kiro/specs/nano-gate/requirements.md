@@ -88,7 +88,7 @@ response's `inferenceSource`.
 - R7.3 The page shall show a table with expected verdict, got verdict, latency and path for every answer.
 - R7.4 The summary shall show warm median latency, agreement (got equals expected), and the share of clearly wrong answers caught (graded `partial` or `missed`, not `correct`).
 - R7.5 The verdict shall be GO if warm median latency is at most 5000 ms, agreement is at least 70% and clearly wrong caught is at least 90%, with every answer run on-device.
-- R7.6 If no answer completed on-device, or any answer ran off-device, then the verdict shall be INCONCLUSIVE. Otherwise a failed threshold gives NO-GO.
+- R7.6 If no answer completed on-device, or any answer ran off-device, then the verdict shall be INCONCLUSIVE. Otherwise a failed threshold gives NO-GO. If all thresholds pass but any answer produced no result (a failed call), then the verdict shall be INCONCLUSIVE and the explanation shall not say "all on-device". GO therefore requires every answer to have run on-device.
 - R7.7 The thresholds shall live in one exported config object that callers can override.
 - R7.8 A failed or unparseable item shall count as disagreement and as not caught, and shall not contribute to latency.
 - R7.9 When the user presses "Copy JSON" or "Copy Markdown", the page shall copy the report to the clipboard with no network access, and the page shall keep no answers beyond its own memory.
